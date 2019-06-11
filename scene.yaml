@@ -1,0 +1,746 @@
+# Author: Geraldine Sarmiento
+
+# Tangram Blocks
+# https://tangrams.github.io/blocks/
+# Patricio Gonzalez Vivo
+
+cameras:
+    camera1:
+        type: perspective
+
+global:
+    # default order for basemap features
+    feature_order: function() { return feature.sort_rank; }
+    feature_order_down_1: function() { return feature.sort_rank - 1; }
+    building_extrude_height: |
+        function () { return feature.height > 16 || $zoom >= 16; }
+
+    # Sign up for a Mapzen API key to enjoy higher rate limits
+    # https://mapzen.com/documentation/overview/#developer-accounts-and-api-keys
+    sdk_api_key: '3eqm2_bfTNGZ85ar20fVyA'     # set this value to your Mapzen API key
+
+    scale: 5.
+
+textures:
+    dirt:
+        # url: images/dirt.gif
+        # url: images/stone.png
+        url: images/crystaldraw6.jpg
+
+
+scene:
+    background:
+        color: [1.000,1.000,1.000]
+
+sources:
+    # mapzen:
+    #     type: MVT
+    #     # url:  https://tile.nextzen.org/tilezen/vector/v1/512/all/{z}/{x}/{y}.mvt
+    #     url: https://xyz.api.here.com/tiles/osmbase/512/all/{z}/{x}/{y}.mvt
+    #     url_params:
+    #         api_key: JJiaZE63TZObzPrmx0TQkw
+    #     tile_size: 512
+    #     max_zoom: 16
+
+    nextzen:
+        type: MVT
+        url: https://tile.nextzen.org/tilezen/vector/v1/512/all/{z}/{x}/{y}.mvt
+        url_params:
+            api_key: global.sdk_api_key
+        rasters: [normals-elevation]
+        tile_size: 512
+        max_zoom: 15
+    normals-elevation:
+        type: Raster
+        url: https://tile.nextzen.org/tilezen/terrain/v1/512/normal/{z}/{x}/{y}.png
+        url_params:
+            api_key: global.sdk_api_key
+        tile_size: 512
+        max_zoom: 14
+
+    xyz-osm:
+        type: MVT
+        url: https://xyz.api.here.com/tiles/osmbase/256/all/{z}/{x}/{y}.mvt
+
+layers:
+    earth:
+        data: { source: nextzen, layer: earth }
+        draw:
+            polygons:
+                style: dots
+                order: global.feature_order
+                color: [1.000,1.000,1.000]
+
+    water:
+        data: { source: nextzen, layer: water }
+        draw:
+            polygons:
+                style: water
+                color: [0.000,0.000,0.000]
+                order: global.feature_order
+
+    landuse:
+        data: { source: nextzen }
+        draw:
+            polygons:
+                order: global.feature_order
+                visible: false
+        # tier1:
+        national_park:
+            filter:
+                all:
+                    - kind: [national_park, battlefield, protected_area]
+                any:
+                    - not: { operator: [ "United States Forest Service" ] }
+                    - protect_class: ['2','3','5']
+            draw:
+                polygons:
+                    style: park
+                    color: [1.000,1.000,1.000]
+                    visible: true
+            us_national_park:
+                # yosemite national park, death valley national park, grand canyon national park
+                filter:
+                    any:
+                        - operator: [ "United States National Park Service" ]
+                        - protect_class: ['2','3','5']
+                draw:
+                    polygons:
+                        style: park
+                        color: [0.300,0.300,0.300]
+                        visible: true
+
+
+        conservation:
+            filter:
+                $zoom: { min: 4 }
+                kind: [protected_area, nature_reserve, national_park]
+                not: { protect_class: ['2','3','5']}
+            draw:
+                polygons:
+                    style: conservation
+                    color: [0.300,0.300,0.300]
+                    visible: true
+
+        # national_forest_level_6:
+        #     filter:
+        #         all:
+        #             - kind: forest
+        #         any:
+        #             - protect_class: ['6']
+        #             - operator: ['United States Forest Service']
+        #     draw:
+        #         polygons:
+        #             # style: grid-green
+        #             style: green-grid
+        #             color: [0.300,0.300,0.300]
+        #             visible: true
+        #         lines:
+        #             color: [0.900,0.900,0.900]
+        #             width: 2px
+        #             visible: true
+
+        # forest-landcover:
+        #     filter: { kind: [forest, natural_forest, wood, natural_wood, natural_park], $zoom: { min: 10 }, not: { operator: "United States Forest Service" } }
+        #     draw:
+        #         polygons:
+        #             # style: grid-green
+        #             style: green-grid
+        #             color: [0.300,0.300,0.300]
+        #             visible: true
+        #         lines:
+        #             color: [0.900,0.900,0.900]
+        #             width: 2px
+        #             visible: true
+
+        # parks-and-national-forests-not-national-park:
+        #     filter:
+        #         all:
+        #             - $zoom: { min: 4 }
+        #             - kind: [park, national_park]
+        #         any:
+        #             - not: { operator: [ "United States National Park Service", "United States Forest Service" ] }
+        #             - not: { protect_class: ['2','3','5','6'] }
+        #     # default for national forests and more?
+        #     draw:
+        #         polygons:
+        #             # style: grid-green
+        #             style: green-grid
+        #             color: [0.300,0.300,0.300]
+        #             visible: true
+        #         lines:
+        #             color: [0.900,0.900,0.900]
+        #             width: 2px
+        #             visible: true
+        #     national_park:
+        #         #filter: function() { return feature.name && (feature.name.indexOf('National Park') > -1); }
+        #         filter:
+        #             all:
+        #                 - kind: national_park
+        #                 - not: [ protect_class: ['2','3','5','6'], operator: [ "United States National Park Service"] ]
+        #         draw:
+        #             polygons:
+        #                 # style: grid-green
+        #                 style: green-grid
+        #                 visible: true
+
+styles:
+    texture_x4:
+        base: polygons
+        shaders:
+            uniforms:
+                u_customtexture: images/uv-coords.png
+                u_scale: 4. # number of times to repeat texture in a tile
+            blocks:
+                position: |
+                    // make tile worldspace coordinates available to the global block
+                    v_pos = modelPosition();
+                global: |
+                    varying vec4 v_pos;
+                    vec4 TileTexture(sampler2D tex, float scale) {
+                        // CONTROLS
+                        // how smooth should the transition be?
+                        // 0 = snapping, 1 = continuous smoothstep crossfade
+                        float smoothness = .75;
+                        vec2 IN = v_pos.xy * scale * exp2(floor(u_map_position.z)-u_tile_origin.z);
+                        vec2 OUT = v_pos.xy * scale * exp2(floor(u_map_position.z)-u_tile_origin.z + 1.);
+                        vec4 intex = texture2D(tex,fract(IN));
+                        vec4 outtex = texture2D(tex,fract(OUT));
+                        float texf;
+                        //// linear transition
+                        // texf = fract(u_map_position.z);
+                        //// use smoothstep instead
+                        float tx = (1. - smoothness) * .5;
+                        texf = smoothstep(tx, 1.-tx, fract(u_map_position.z));
+                        return mix(intex, outtex, texf);
+                    }
+                color: |
+                    color.rgb = TileTexture(u_customtexture,u_scale).rgb;
+
+    texture_x1:
+        base: polygons
+        shaders:
+            uniforms:
+                u_customtexture: images/uv-coords.png
+                u_scale: 1. # number of times to repeat texture in a tile
+            blocks:
+                position: |
+                    // make tile worldspace coordinates available to the global block
+                    v_pos = modelPosition();
+                global: |
+                    varying vec4 v_pos;
+                    vec4 TileTexture(sampler2D tex, float scale) {
+                        // CONTROLS
+                        // how smooth should the transition be?
+                        // 0 = snapping, 1 = continuous smoothstep crossfade
+                        float smoothness = .75;
+                        vec2 IN = v_pos.xy * scale * exp2(floor(u_map_position.z)-u_tile_origin.z);
+                        vec2 OUT = v_pos.xy * scale * exp2(floor(u_map_position.z)-u_tile_origin.z + 1.);
+                        vec4 intex = texture2D(tex,fract(IN));
+                        vec4 outtex = texture2D(tex,fract(OUT));
+                        float texf;
+                        //// linear transition
+                        // texf = fract(u_map_position.z);
+                        //// use smoothstep instead
+                        float tx = (1. - smoothness) * .5;
+                        texf = smoothstep(tx, 1.-tx, fract(u_map_position.z));
+                        return mix(intex, outtex, texf);
+                    }
+                color: |
+                    color.rgb = TileTexture(u_customtexture,u_scale).rgb;
+
+
+    dots:
+        base: polygons
+        mix: texture_x4
+        shaders:
+            uniforms:
+                u_customtexture: images/dots2.jpg
+
+    water:
+        base: polygons
+        mix: texture_x1
+        shaders:
+            uniforms:
+                u_customtexture: images/water.jpg
+
+    conservation:
+        base: polygons
+        mix: texture_x1
+        shaders:
+            uniforms:
+                u_customtexture: images/water-brush3.jpg
+
+    park:
+        base: polygons
+        mix: texture_x1
+        shaders:
+            uniforms:
+                u_customtexture: images/park2.jpg
+
+    dash-terrain-landuse:
+        base: polygons
+        mix: [functions-zoom, elevation-dash]
+        shaders:
+            defines:
+                ZOOM_START: 14.
+                ZOOM_END: 18.
+                ZOOM_IN: .0
+                ZOOM_OUT: 1.
+
+                DASH_COLOR: vec3(1.000,1.000,1.000)
+                DASH_BACKGROUND_COLOR: vec3(0.770,0.770,0.770)
+                DASH_SCALE: 15.
+                DASH_TYPE: fill
+                DASH_TILE_STYLE: brick
+                DASH_DIR: vec3(-0.600,-0.420,0.560)
+                NORMAL_TEXTURE_INDEX: 0
+                DASH_MIN_SIZE: .02
+                DASH_MAX_SIZE: 1.
+                DASH_SIZE: shade
+
+    elevation-dash:
+        doc:
+            author:
+                name: Patricio Gonzalez Vivo
+                twitter: patriciogv
+            version: 0.0.1
+            tangram-version: 0.0.7
+            licence: MIT
+            description: |
+                Perfect for the `landuse` layer on your elevation maps, the `elevation-dash` modules use the color of the layer to draw a dash pattern that changes width based on the surface of the terrain.
+        base: polygons
+        mix: [ polygons-diagonal-dash, park]
+        # lighting: false
+        # raster: normal
+        raster: custom
+        shaders:
+            defines:
+                DASH_COLOR: color.rgb*.5
+                DASH_BACKGROUND_COLOR: color.rgb
+                DASH_SCALE: 10.
+                DASH_SIZE: 0.9
+                DASH_TYPE: fill
+                DASH_TILE_STYLE: brick
+                DASH_DIR: vec3(-0.600,-0.420,0.560)
+                NORMAL_TEXTURE_INDEX: 0
+                DASH_MIN_SIZE: .7
+                DASH_MAX_SIZE: 1.
+                DASH_SIZE: shade
+            blocks:
+                normal: |
+                    float shade = dot((sampleRaster(int(NORMAL_TEXTURE_INDEX)).rgb-.5)*2., DASH_DIR);
+                    shade = mix(DASH_MIN_SIZE, DASH_MAX_SIZE, (shade*shade*shade)*4.);
+
+    polygons-diagonal-dash:
+        doc:
+            author:
+                name: Patricio Gonzalez Vivo
+                twitter: patriciogv
+            version: 0.0.1
+            tangram-version: 0.0.7
+            licence: MIT
+            description: |
+                Apply a diagonal dash pattern to the polygon style. To learn more about patterns check [this chapter from the Book of Shaders](https://thebookofshaders.com/09/)
+        ui:
+            shaders:
+                defines:
+                    DASH_SCALE:
+                        type: number
+                        label: Scale
+                        range:
+                            min: 1.
+                            max: 1000.
+                            step: 1.
+                    DASH_SIZE:
+                        type: number
+                        label: Alpha
+                        range:
+                            min: 0.
+                            max: 1.
+                            step: 0.01
+                    STRIPES_ALPHA:
+                        type: number
+                        label: Alpha
+                        range:
+                            min: 0.
+                            max: 1.
+                            step: 0.01
+                    DASH_COLOR:
+                        type: color
+                        label: Color
+                    DASH_BACKGROUND_COLOR:
+                        type: color
+                        label: 'Background color'
+                    DASH_TYPE:
+                        type: dropdownArray
+                        label: Type
+                        values: ['fill', 'stroke']
+                    DASH_TILE_STYLE:
+                        type: dropdownArray
+                        label: 'Tile type'
+                        values: ['tile', 'brick']
+        base: polygons
+        mix: [block, space-tile, tiling-brick, tiling-tile, shapes-type]
+        shaders:
+            defines:
+                DASH_COLOR: color.rgb*.5
+                DASH_BACKGROUND_COLOR: color.rgb
+                DASH_SCALE: 10.
+                DASH_SIZE: 0.9
+                DASH_TYPE: fill
+                DASH_TILE_STYLE: tile
+            blocks:
+                global: |
+                    float dashDF(vec2 st) {
+                        return min(cos((st.x-st.y)*PI),-cos((st.x+st.y+.5)*PI*.6666)*5.);
+                    }
+                color: |
+                    color.rgb = mix(DASH_BACKGROUND_COLOR,
+                                    DASH_COLOR,
+                                    DASH_TYPE( DASH_SIZE, dashDF(DASH_TILE_STYLE(getTileCoords()*DASH_SCALE,3.))) );
+
+    block:
+        shaders:
+            defines:
+                ADD: '+'
+                SUBTRACT: '-'
+                MULTIPLY: '*'
+
+                PI: 3.1415926535897932384626433832795
+                TWO_PI: 6.2831853071795864769252867665590
+                HALF_PI: 1.5707963267948966192313216916398
+                QUATER_PI: .785398163
+
+                EPSILON: 0.0000001
+
+                deg2rad(d): (((d)*3.1415926535897932384626433832795)/180.0)
+                rad2deg(d): (((d)*180.0)/3.1415926535897932384626433832795)
+
+    space-tile:
+        doc:
+            author:
+                name: Patricio Gonzalez Vivo
+                twitter: patriciogv
+            version: 0.0.1
+            tangram-version: 0.0.7
+            licence: MIT
+            description: |
+                Get the position on the tile
+        test:
+            tile:
+                defines:
+                    v_pos: 'v_texcoord'
+                blocks:
+                    color: |
+                        vec2 st = getTileCoords();
+                        color.rg += fract(st*3.);
+        shaders:
+            blocks:
+                global: |
+                    // Variant to be add to both vertex and fragments shaders
+                    #ifndef v_pos
+                    varying vec3 v_pos;
+                    #endif
+
+                    //
+                    // Get the coordinates in tile space
+                    // ================================
+                    vec2 getTileCoords() {
+                        return fract(v_pos.xy);
+                    }
+
+                position: |
+                    // Normalize the attribute position of a vertex
+                    v_pos = modelPosition().xyz;
+
+    tiling-brick:
+        doc:
+            author:
+                name: Patricio Gonzalez Vivo
+                twitter: patriciogv
+            version: 0.0.1
+            tangram-version: 0.0.7
+            licence: MIT
+            description: |
+                Repeats a coordinate space (`vec2 st`) in diferent brick-like tiles N times (`float zoom`). For more information about tilling patterns read [this chapter of The Book of Shaders](https://thebookofshaders.com/09/)
+            examples:
+                nursery:
+                    url: https://tangrams.github.io/tangram-sandbox/styles/nursery.yaml
+                    img: https://tangrams.github.io/tangram-sandbox/styles/nursery.png
+                    lines: 99
+                patterns:
+                    url: https://tangrams.github.io/tangram-sandbox/styles/patterns.yaml
+                    img: https://tangrams.github.io/tangram-sandbox/styles/patterns.png
+                    lines: 130
+        test:
+            brick: { blocks: { color: "    color.rg += brick(v_texcoord.xy,5.);" } }
+        shaders:
+            blocks:
+                global: |
+                    vec2 brick (vec2 st, float zoom) {
+                        st *= zoom;
+                        // Here is where the offset is happening
+                        st.x += step(1., mod(st.y,2.0)) * 0.5;
+                        return fract(st);
+                    }
+
+    tiling-tile:
+        doc:
+            author:
+                name: Patricio Gonzalez Vivo
+                twitter: patriciogv
+            version: 0.0.1
+            tangram-version: 0.0.7
+            licence: MIT
+            description: |
+                Repeats a coordinate space (`vec2 st`) in diferent brick-like tiles N times (`float zoom`). For more information about tilling patterns read [this chapter of The Book of Shaders](https://thebookofshaders.com/09/)
+        test:
+            tile: { blocks: { color: "    color.rg += tile(v_texcoord.xy,5.);" } }
+        shaders:
+            blocks:
+                global: |
+                    // Repeats a coordinate space (st) in diferent tiles
+                    // ================================
+                    vec2 tile (vec2 st, float zoom) {
+                        st *= zoom;
+                        return fract(st);
+                    }
+
+    shapes-type:
+        doc:
+            author:
+                name: Patricio Gonzalez Vivo
+                twitter: patriciogv
+            version: 0.0.1
+            tangram-version: 0.0.7
+            licence: MIT
+            description: |
+                This block provides to functions `fill` and `stroke`. Each one transform a SDF to a fill shape or a stroke shape (border). The stroke width can be control with the define `STROKE`.
+                To learn more about how to make shapes on shaders go to From check [this chapter about shapes from the Book of Shaders](https://thebookofshaders.com/07/)
+        mix: [functions-aastep]
+        shaders:
+            defines:
+                STROKE: 0.15
+            blocks:
+                global: |
+                    float fill (in float size, in float x) {
+                        return 1.-aastep(size, x);
+                    }
+
+                    float stroke (in float size, in float x) {
+                        return aastep(size, x+STROKE*.5) - aastep(size, x-STROKE*.5);
+                    }
+
+    functions-zoom:
+        doc:
+            author:
+                name: Patricio Gonzalez Vivo
+                twitter: patriciogv
+            version: 0.0.1
+            tangram-version: 0.0.7
+            licence: MIT
+            description: |
+                when you mix this block to another block you can use the functions `zoom()` or `zoomEase()`. Both will help you to interpolate any values between the zooms `ZOOM_START` and `ZOOM_END`.
+                By default `zoom()` and `zoomEase()` will return a `float `number between 0 and 1. But you can change it to interpolate any thing! Like `floats`, `vec2`, `vec3`, `vec4` and even other functions! For that you just need to change de `defines`: `ZOOM_IN`, and `ZOOM_OUT` to what ever you want to interpolate.
+                `zoom()` use the cuadratic interpolation of `smoothstep()` but you can use `zoomEase()` to specify what type of **easing interpolation** you prefere. Just change the default `linear` function for any [easing functions describe here](#functions-easing) in the `ZOOM_FNC` define. Ex: `ZOOM_FNC: quadraticInOut`
+        mix: [functions-easing]
+        shaders:
+            defines:
+                ZOOM_START: 14.
+                ZOOM_END: 20.
+                ZOOM_MAX: max(ZOOM_START, ZOOM_END)
+                ZOOM_FNC: linear
+                ZOOM_IN: 0.0
+                ZOOM_OUT: 1.0
+            blocks:
+                global: |
+                    float zoom() {
+                        return mix( ZOOM_IN,
+                                    ZOOM_OUT,
+                                    clamp( smoothstep(  ZOOM_START/ZOOM_MAX,
+                                                        ZOOM_END/ZOOM_MAX,
+                                                        max(u_map_position.z/ZOOM_MAX, 0.)), 0., 1.) );
+                    }
+                    float zoomEase() {
+                        return mix( ZOOM_IN,
+                                    ZOOM_OUT,
+                                    ZOOM_FNC( (u_map_position.z-ZOOM_START)/(ZOOM_END-ZOOM_START) ) );
+                    }
+    functions-easing:
+        doc:
+            author:
+                name: StackGL
+                url: http://stack.gl/
+            version: 0.0.1
+            tangram-version: 0.0.7
+            licence: MIT
+            description: |
+                Easing functions originally develop by Robert Penner's and transformed to GLSL by [StackGL](http://stack.gl/) in this repo: <https://github.com/stackgl/glsl-easings>
+        shaders:
+            defines:
+                PI: 3.1415926535897932384626433832795
+                HALF_PI: 1.5707963267948966192313216916398
+            blocks:
+                global: |
+                    float linear (in float t) {
+                        return t;
+                    }
+                    float exponentialIn (in float t) {
+                        return t == 0.0 ? t : pow(2.0, 10.0 * (t - 1.0));
+                    }
+                    float exponentialOut (in float t) {
+                        return t == 1.0 ? t : 1.0 - pow(2.0, -10.0 * t);
+                    }
+                    float exponentialInOut (in float t) {
+                        return t == 0.0 || t == 1.0
+                        ? t
+                        : t < 0.5
+                            ? +0.5 * pow(2.0, (20.0 * t) - 10.0)
+                            : -0.5 * pow(2.0, 10.0 - (t * 20.0)) + 1.0;
+                    }
+                    float sineIn (in float t) {
+                        return sin((t - 1.0) * HALF_PI) + 1.0;
+                    }
+                    float sineOut (in float t) {
+                        return sin(t * HALF_PI);
+                    }
+                    float sineInOut (in float t) {
+                        return -0.5 * (cos(PI * t) - 1.0);
+                    }
+                    float qinticIn (in float t) {
+                        return pow(t, 5.0);
+                    }
+                    float qinticOut (in float t) {
+                        return 1.0 - (pow(t - 1.0, 5.0));
+                    }
+                    float qinticInOut (in float t) {
+                        return t < 0.5
+                            ? +16.0 * pow(t, 5.0)
+                            : -0.5 * pow(2.0 * t - 2.0, 5.0) + 1.0;
+                    }
+                    float quarticIn (in float t) {
+                        return pow(t, 4.0);
+                    }
+                    float quarticOut (in float t) {
+                        return pow(t - 1.0, 3.0) * (1.0 - t) + 1.0;
+                    }
+                    float quarticInOut (in float t) {
+                        return t < 0.5
+                            ? +8.0 * pow(t, 4.0)
+                            : -8.0 * pow(t - 1.0, 4.0) + 1.0;
+                    }
+                    float quadraticInOut (in float t) {
+                        float p = 2.0 * t * t;
+                        return t < 0.5 ? p : -p + (4.0 * t) - 1.0;
+                    }
+                    float quadraticIn (in float t) {
+                        return t * t;
+                    }
+                    float quadraticOut (in float t) {
+                        return -t * (t - 2.0);
+                    }
+                    float cubicIn (in float t) {
+                        return t * t * t;
+                    }
+                    float cubicOut (in float t) {
+                        float f = t - 1.0;
+                        return f * f * f + 1.0;
+                    }
+                    float cubicInOut (in float t) {
+                        return t < 0.5
+                            ? 4.0 * t * t * t
+                            : 0.5 * pow(2.0 * t - 2.0, 3.0) + 1.0;
+                    }
+                    float elasticIn (in float t) {
+                        return sin(13.0 * t * HALF_PI) * pow(2.0, 10.0 * (t - 1.0));
+                    }
+                    float elasticOut (in float t) {
+                        return sin(-13.0 * (t + 1.0) * HALF_PI) * pow(2.0, -10.0 * t) + 1.0;
+                    }
+                    float elasticInOut (in float t) {
+                        return t < 0.5
+                            ? 0.5 * sin(+13.0 * HALF_PI * 2.0 * t) * pow(2.0, 10.0 * (2.0 * t - 1.0))
+                            : 0.5 * sin(-13.0 * HALF_PI * ((2.0 * t - 1.0) + 1.0)) * pow(2.0, -10.0 * (2.0 * t - 1.0)) + 1.0;
+                    }
+                    float circularIn (in float t) {
+                        return 1.0 - sqrt(1.0 - t * t);
+                    }
+                    float circularOut (in float t) {
+                        return sqrt((2.0 - t) * t);
+                    }
+                    float circularInOut (in float t) {
+                        return t < 0.5
+                            ? 0.5 * (1.0 - sqrt(1.0 - 4.0 * t * t))
+                            : 0.5 * (sqrt((3.0 - 2.0 * t) * (2.0 * t - 1.0)) + 1.0);
+                    }
+                    float bounceOut (in float t) {
+                        const float a = 4.0 / 11.0;
+                        const float b = 8.0 / 11.0;
+                        const float c = 9.0 / 10.0;
+                        const float ca = 4356.0 / 361.0;
+                        const float cb = 35442.0 / 1805.0;
+                        const float cc = 16061.0 / 1805.0;
+                        float t2 = t * t;
+                        return t < a
+                        ? 7.5625 * t2
+                        : t < b
+                            ? 9.075 * t2 - 9.9 * t + 3.4
+                            : t < c
+                                ? ca * t2 - cb * t + cc
+                                : 10.8 * t * t - 20.52 * t + 10.72;
+                    }
+                    float bounceIn (in float t) {
+                        return 1.0 - bounceOut(1.0 - t);
+                    }
+                    float bounceInOut (in float t) {
+                        return t < 0.5
+                        ? 0.5 * (1.0 - bounceOut(1.0 - t * 2.0))
+                        : 0.5 * bounceOut(t * 2.0 - 1.0) + 0.5;
+                    }
+                    float backIn (in float t) {
+                        return pow(t, 3.0) - t * sin(t * PI);
+                    }
+                    float backOut (in float t) {
+                        float f = 1.0 - t;
+                        return 1.0 - (pow(f, 3.0) - f * sin(f * PI));
+                    }
+                    float backInOut (in float t) {
+                        float f = t < 0.5
+                        ? 2.0 * t
+                        : 1.0 - (2.0 * t - 1.0);
+                        float g = pow(f, 3.0) - f * sin(f * PI);
+                        return t < 0.5
+                        ? 0.5 * g
+                        : 0.5 * (1.0 - g) + 0.5;
+                    }
+
+
+    functions-aastep:
+        doc:
+            author:
+                name: Matt DesLauriers
+                twitter: mattdesl
+            version: 0.0.1
+            tangram-version: 0.0.7
+            licence: MIT
+            description: |
+                AnitAliased ```step()``` function implemented by [Matt DesLauriers](https://twitter.com/mattdesl) in this module <https://github.com/stackgl/glsl-aastep>
+        shaders:
+            extensions: OES_standard_derivatives
+            blocks:
+                global: |
+                    // AntiAliased Step function
+                    //=============================
+                    float aastep(float threshold, float value) {
+                        #ifdef TANGRAM_FRAGMENT_SHADER
+                            #ifdef TANGRAM_EXTENSION_OES_standard_derivatives
+                                float afwidth = length(vec2(dFdx(value), dFdy(value))) * 0.70710678118654757;
+                                return smoothstep(threshold-afwidth, threshold+afwidth, value);
+                            #else
+                                return step(threshold, value);
+                            #endif
+                        #else
+                            return step(threshold, value);
+                        #endif
+                    }
