@@ -122,36 +122,26 @@ layers:
                     color: [0.300,0.300,0.300]
                     visible: true
 
-        # national_forest_level_6:
-        #     filter:
-        #         all:
-        #             - kind: forest
-        #         any:
-        #             - protect_class: ['6']
-        #             - operator: ['United States Forest Service']
-        #     draw:
-        #         polygons:
-        #             # style: grid-green
-        #             style: green-grid
-        #             color: [0.300,0.300,0.300]
-        #             visible: true
-        #         lines:
-        #             color: [0.900,0.900,0.900]
-        #             width: 2px
-        #             visible: true
+        national_forest_level_6:
+            filter:
+                all:
+                    - kind: forest
+                any:
+                    - protect_class: ['6']
+                    - operator: ['United States Forest Service']
+            draw:
+                polygons:
+                    style: forest
+                    color: [0.300,0.300,0.300]
+                    visible: true
 
-        # forest-landcover:
-        #     filter: { kind: [forest, natural_forest, wood, natural_wood, natural_park], $zoom: { min: 10 }, not: { operator: "United States Forest Service" } }
-        #     draw:
-        #         polygons:
-        #             # style: grid-green
-        #             style: green-grid
-        #             color: [0.300,0.300,0.300]
-        #             visible: true
-        #         lines:
-        #             color: [0.900,0.900,0.900]
-        #             width: 2px
-        #             visible: true
+        forest-landcover:
+            filter: { kind: [forest, natural_forest, wood, natural_wood, natural_park], $zoom: { min: 10 }, not: { operator: "United States Forest Service" } }
+            draw:
+                polygons:
+                    style: forest
+                    color: [0.300,0.300,0.300]
+                    visible: true
 
         # parks-and-national-forests-not-national-park:
         #     filter:
@@ -184,7 +174,78 @@ layers:
         #                 style: green-grid
         #                 visible: true
 
+    buildings:
+        data: { source: nextzen, layer: buildings }
+        filter:
+            not: { location: underground }
+        draw:
+            polygons:
+                visible: false
+                order: 329
+                color: [1.000,1.000,1.000]
+            lines:
+                visible: false
+                order: 329
+
+        footprints:
+            filter:
+                any:
+                    - { $zoom: [13], scale_rank: [1,2,3] }
+                    - { $zoom: [14], scale_rank: [1,2,3] }
+                    - { $zoom: [15], height: { min: 100 } }
+                    - { $zoom: [15], area: { min: 700 } }
+                    - { $zoom: [15], volume: { min: 100000 } }
+                    - { $zoom: [16], area: { min: 100 } }
+                    - { $zoom: [16], volume: { min: 50000 } }
+                    - { $zoom: { min: 17 }, area: true }
+            draw:
+                polygons:
+                    visible: true
+                    style: diagonal-dots
+
 styles:
+    dots:
+        base: polygons
+        mix: texture_x4
+        shaders:
+            uniforms:
+                u_customtexture: images/dots2.jpg
+
+    diagonal-dots:
+        base: polygons
+        mix: texture_x1
+        shaders:
+            uniforms:
+                u_customtexture: images/diagonal-dot.jpg
+
+    water:
+        base: polygons
+        mix: texture_x1
+        shaders:
+            uniforms:
+                u_customtexture: images/water.jpg
+
+    conservation:
+        base: polygons
+        mix: texture_x1
+        shaders:
+            uniforms:
+                u_customtexture: images/water-brush3.jpg
+
+    forest:
+        base: polygons
+        mix: texture_x1
+        shaders:
+            uniforms:
+                u_customtexture: images/forest1.jpg
+
+    park:
+        base: polygons
+        mix: texture_x1
+        shaders:
+            uniforms:
+                u_customtexture: images/park2.jpg
+
     texture_x4:
         base: polygons
         shaders:
@@ -248,35 +309,6 @@ styles:
                     }
                 color: |
                     color.rgb = TileTexture(u_customtexture,u_scale).rgb;
-
-
-    dots:
-        base: polygons
-        mix: texture_x4
-        shaders:
-            uniforms:
-                u_customtexture: images/dots2.jpg
-
-    water:
-        base: polygons
-        mix: texture_x1
-        shaders:
-            uniforms:
-                u_customtexture: images/water.jpg
-
-    conservation:
-        base: polygons
-        mix: texture_x1
-        shaders:
-            uniforms:
-                u_customtexture: images/water-brush3.jpg
-
-    park:
-        base: polygons
-        mix: texture_x1
-        shaders:
-            uniforms:
-                u_customtexture: images/park2.jpg
 
     dash-terrain-landuse:
         base: polygons
