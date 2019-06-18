@@ -465,6 +465,16 @@ layers:
                     polygons:
                         visible: true
 
+        golf_course:
+            filter:
+                kind: golf_course
+            draw:
+                polygons:
+                    # style: texture-terrain-park
+                    style: terrain-dots
+                    color: [0.000,0.000,0.000]
+                    visible: true
+
     # buildings:
     #     data: { source: nextzen, layer: buildings }
     #     filter:
@@ -574,9 +584,8 @@ styles:
             uniforms:
                 # two textures to cross-fade between
                 u_textures:
-                    - images/water-brush3.jpg
-                    # - https://raw.githubusercontent.com/sensescape/bw-texture/master/images/water-brush4.jpg
                     - images/water-brush1.jpg
+                    - images/water-brush3.jpg
                 u_zoom_fade: [12.5, 13] # zooms to start/stop cross-fade
                 u_scale: 1. # number of times to repeat texture in a tile
                 u_light: [-0.5, 0.5, -0.5] # lights are flipped to match sat hillshade
@@ -636,9 +645,8 @@ styles:
             uniforms:
                 # two textures to cross-fade between
                 u_textures:
-                    - images/park.jpg
-                    # - https://raw.githubusercontent.com/sensescape/bw-texture/master/images/water-brush4.jpg
                     - images/park-dots1.jpg
+                    - images/park.jpg
                 u_zoom_fade: [12.5, 13] # zooms to start/stop cross-fade
                 u_scale: 1. # number of times to repeat texture in a tile
                 u_light: [-0.5, 0.5, -0.5] # lights are flipped to match sat hillshade
@@ -698,9 +706,8 @@ styles:
             uniforms:
                 # two textures to cross-fade between
                 u_textures:
-                    - images/forest1.jpg
-                    # - https://raw.githubusercontent.com/sensescape/bw-texture/master/images/water-brush4.jpg
                     - images/forest2.jpg
+                    - images/forest1.jpg
                 u_zoom_fade: [12.5, 13] # zooms to start/stop cross-fade
                 u_scale: 1. # number of times to repeat texture in a tile
                 u_light: [-0.5, 0.5, -0.5] # lights are flipped to match sat hillshade
@@ -760,8 +767,8 @@ styles:
             uniforms:
                 # two textures to cross-fade between
                 u_textures:
-                    - images/earth-dots5.jpg
                     - images/earth-dots2.jpg
+                    - images/earth-dots5.jpg
                     # - images/earth-dots6.jpg
                     # - images/earth-dots5.jpg
                 u_zoom_fade: [12.5, 13] # zooms to start/stop cross-fade
@@ -914,27 +921,198 @@ styles:
             uniforms:
                 u_textures:
                     - images/park4.jpg
-                    # - https://raw.githubusercontent.com/sensescape/bw-texture/master/images/water.jpg
                     - images/forest1.jpg
                 u_zoom_fade: [12.25, 13.25]
                 u_scale: 1.
 
-    block:
+    terrain-dots:
+        base: polygons
+        mix: [elevation-ramp, terrain-pattern]
+
+    terrain-pattern:
+        base: polygons
+        mix: [elevation-normal, functions-zoom, polygons-dots]
         shaders:
             defines:
-                ADD: '+'
-                SUBTRACT: '-'
-                MULTIPLY: '*'
+                ZOOM_START: 0.
+                ZOOM_END: 13.
+                DOTS_DIR: vec3(-0.500,0.500,-0.500)
+                # DOTS_DIR: vec3(0.600,-0.950,0.520)
+                DOTS_COLOR: vec3(0.)
+                DOTS_BACKGROUND_COLOR: vec3(1.)
+                DOTS_SCALE: 65.
+                DOTS_SIZE: mix(shade*4.,shade*1.,zoom())
+                # DOTS_SCALE: 35.
+                # DOTS_SIZE: mix(shade*10.,shade*2.,zoom())
+            blocks:
+                normal: |
+                    float shade = dot(normal, DOTS_DIR);
+                    // modify brightness and contrast
+                    shade = shade*shade*shade * -2. + .25;
+                    // reset normal to prevent standard terrain shading mixing with dots
+                    normal = vec3(0,0,1);
 
-                PI: 3.1415926535897932384626433832795
-                TWO_PI: 6.2831853071795864769252867665590
-                HALF_PI: 1.5707963267948966192313216916398
-                QUATER_PI: .785398163
+    elevation-normal:
+        raster: custom
+        shaders:
+            defines:
+                NORMAL_TEXTURE_INDEX: 0
+            blocks:
+                normal: |
+                    vec4 normal_elv_raster = sampleRaster(int(NORMAL_TEXTURE_INDEX));
+                    normal = (normal_elv_raster.rgb-.5)*2.;
 
-                EPSILON: 0.0000001
+    elevation-ramp:
+        shaders:
+            uniforms:
+                u_ramp: palette
+            blocks:
+                color: |
+                    color = texture2D(u_ramp, vec2((1.-normal_elv_raster.a),.5));
+        raster: custom
 
-                deg2rad(d): (((d)*3.1415926535897932384626433832795)/180.0)
-                rad2deg(d): (((d)*180.0)/3.1415926535897932384626433832795)
+    polygons-dots:
+        base: polygons
+        mix:
+            - space-tile
+            - tiling-brick
+            - shapes-circle
+        shaders:
+            blocks:
+                global: |
+                    float TileDots(float scale, float size) {
+
+                        // controls
+                        float DOT_SIZE = size * .1; // bigger value = smaller dots
+                        float SPEED = 2.; // bigger value = faster transition
+
+                        vec2 tc = getTileCoords() * size * pow(2., floor(u_map_position.z) - abs(u_tile_origin.z));
+                        vec2 IN = brick(tc, 2.);
+                        float A = circleDF(vec2(.5) - IN) * DOT_SIZE;
+                        vec2 OUT = brick(tc, 4.);
+                        float B = circleDF(vec2(.5) - OUT) * DOT_SIZE;
+
+                        // keep B dots big as they fade in, to maintain density
+                        B *= pow(fract(u_map_position.z)*.95, SPEED);
+
+                        float d = mix(A, B, pow(fract(u_map_position.z), SPEED));
+                        return aastep(scale, d);
+                    }
+
+                color: |
+                    color.rgb = mix(DOTS_COLOR, DOTS_BACKGROUND_COLOR, TileDots(DOTS_SIZE, DOTS_SCALE));
+
+    runway-glow:
+        base: lines
+        mix: [lines-glow]
+        shaders:
+            defines:
+                GLOW_WIDTH: 0.80
+                GLOW_BRIGHTNESS: .5
+
+    runway-dots:
+        base: lines
+        mix: [lines-dots-glow]
+        animated: true
+        shaders:
+            defines:
+                DOTS_ANIMATE: color.a *=abs(sin(v_texcoord.y+u_time))*1.0
+            blocks:
+                filter: |
+                    #ifdef DOTS_ANIMATE
+                    DOTS_ANIMATE;
+                    #endif
+
+    lines-glow:
+        doc:
+            author: 
+                name: Patricio Gonzalez Vivo
+                twitter: patriciogv
+            version: 0.0.1
+            tangram-version: 0.0.7
+            licence: MIT
+            description: |  
+                Add an exciting glow effect to your
+        ui:
+            shaders:
+                defines:
+                    GLOW_WIDTH:
+                        type: number
+                        label: Solid width
+                        range: 
+                            min: 0.
+                            max: 1.
+                            step: 0.01
+                    GLOW_BRIGHTNESS:
+                        type: number
+                        label: Glow Brightness
+                        range: 
+                            min: 0.
+                            max: 1.
+                            step: 0.01
+        base: lines
+        mix: [block, functions-aastep]
+        texcoords: true
+        blend: add
+        shaders:
+            defines:
+                GLOW_WIDTH: 0.4
+                GLOW_BRIGHTNESS: .25
+            blocks:
+                color: |
+                    vec4 glow_tmp_color = color;
+                    color = glow_tmp_color*(aastep(GLOW_WIDTH,1.-v_texcoord.x)*aastep(GLOW_WIDTH,v_texcoord.x));
+                    color += glow_tmp_color*(sin(v_texcoord.x*PI)*GLOW_BRIGHTNESS);
+
+    lines-dots-glow:
+        base: lines
+        doc:
+            author: 
+                name: Patricio Gonzalez Vivo
+                twitter: patriciogv
+            version: 0.0.1
+            tangram-version: 0.0.7
+            licence: MIT
+            description: |
+                Apply a dot pattern to a line with some glow
+        ui:
+            shaders:
+                defines:
+                    DOTS_SIZE:
+                        type: number
+                        label: Size
+                        range: 
+                            min: 0.
+                            max: 1.
+                            step: 0.01
+                    DOTS_GLOW:
+                        type: number
+                        label: Glow amount
+                        range: 
+                            min: 0.
+                            max: 1.
+                            step: 0.01
+                    DOTS_SCALE:
+                        type: number
+                        label: Scale
+                        range: 
+                            min: 0.
+                            max: 2.
+                            step: 0.1
+        texcoords: true
+        blend: overlay
+        animated: true
+        shaders:
+            defines:
+                DOTS_SCALE: 2.
+                DOTS_SIZE: 0.15
+                DOTS_GLOW: .5
+            blocks:
+                color: |
+                    vec2 st = (fract(v_texcoord.xy)-.5)*DOTS_SCALE;
+                    float df = dot(st,st);
+                    color.a = 1.-step(DOTS_SIZE, df);
+                    color.a += smoothstep(1.,0.,df)*(DOTS_GLOW);
 
     space-tile:
         doc:
@@ -1263,89 +1441,6 @@ styles:
                         #endif
                     }
 
-    terrain-dots:
-        base: polygons
-        mix: [elevation-ramp, terrain-pattern, colorized-earth]
-
-    colorized-earth:
-        shaders:
-            uniforms:
-                u_tint: [0.900,0.900,0.900]
-                u_fill: [0.100,0.100,0.100]
-            blocks:
-                filter: |
-                    color.rgb = mix(u_tint.rgb, u_fill.rgb, color.rgb);
-
-    terrain-pattern:
-        base: polygons
-        mix: [elevation-normal, functions-zoom, polygons-dots]
-        shaders:
-            defines:
-                ZOOM_START: 0.
-                ZOOM_END: 13.
-                DOTS_DIR: vec3(0.600,-0.950,0.520)
-                DOTS_COLOR: vec3(0.)
-                DOTS_BACKGROUND_COLOR: vec3(1.)
-                DOTS_SCALE: 35.
-                DOTS_SIZE: mix(shade*10.,shade*2.,zoom())
-            blocks:
-                normal: |
-                    float shade = dot(normal, DOTS_DIR);
-                    // modify brightness and contrast
-                    shade = shade*shade*shade * -2. + .65;
-                    // reset normal to prevent standard terrain shading mixing with dots
-                    normal = vec3(0,0,1);
-
-    elevation-normal:
-        raster: custom
-        shaders:
-            defines:
-                NORMAL_TEXTURE_INDEX: 0
-            blocks:
-                normal: |
-                    vec4 normal_elv_raster = sampleRaster(int(NORMAL_TEXTURE_INDEX));
-                    normal = (normal_elv_raster.rgb-.5)*2.;
-
-    elevation-ramp:
-        shaders:
-            uniforms:
-                u_ramp: palette
-            blocks:
-                color: |
-                    color = texture2D(u_ramp, vec2((1.-normal_elv_raster.a),.5));
-        raster: custom
-
-    polygons-dots:
-        base: polygons
-        mix:
-            - space-tile
-            - tiling-brick
-            - shapes-circle
-        shaders:
-            blocks:
-                global: |
-                    float TileDots(float scale, float size) {
-
-                        // controls
-                        float DOT_SIZE = size * .1; // bigger value = smaller dots
-                        float SPEED = 2.; // bigger value = faster transition
-
-                        vec2 tc = getTileCoords() * size * pow(2., floor(u_map_position.z) - abs(u_tile_origin.z));
-                        vec2 IN = brick(tc, 2.);
-                        float A = circleDF(vec2(.5) - IN) * DOT_SIZE;
-                        vec2 OUT = brick(tc, 4.);
-                        float B = circleDF(vec2(.5) - OUT) * DOT_SIZE;
-
-                        // keep B dots big as they fade in, to maintain density
-                        B *= pow(fract(u_map_position.z)*.95, SPEED);
-
-                        float d = mix(A, B, pow(fract(u_map_position.z), SPEED));
-                        return aastep(scale, d);
-                    }
-
-                color: |
-                    color.rgb = mix(DOTS_COLOR, DOTS_BACKGROUND_COLOR, TileDots(DOTS_SIZE, DOTS_SCALE));
-
     shapes-circle:
         mix: functions-aastep
         shaders:
@@ -1365,114 +1460,19 @@ styles:
                         return 1.-aastep(radius, circleDF(st-vec2(0.5))*PI);
                     }
 
-    runway-glow:
-        base: lines
-        mix: [lines-glow]
+    block:
         shaders:
             defines:
-                GLOW_WIDTH: 0.80
-                GLOW_BRIGHTNESS: .5
+                ADD: '+'
+                SUBTRACT: '-'
+                MULTIPLY: '*'
 
-    runway-dots:
-        base: lines
-        mix: [lines-dots-glow]
-        animated: true
-        shaders:
-            defines:
-                DOTS_ANIMATE: color.a *=abs(sin(v_texcoord.y+u_time))*1.0
-            blocks:
-                filter: |
-                    #ifdef DOTS_ANIMATE
-                    DOTS_ANIMATE;
-                    #endif
+                PI: 3.1415926535897932384626433832795
+                TWO_PI: 6.2831853071795864769252867665590
+                HALF_PI: 1.5707963267948966192313216916398
+                QUATER_PI: .785398163
 
-    lines-glow:
-        doc:
-            author: 
-                name: Patricio Gonzalez Vivo
-                twitter: patriciogv
-            version: 0.0.1
-            tangram-version: 0.0.7
-            licence: MIT
-            description: |  
-                Add an exciting glow effect to your
-        ui:
-            shaders:
-                defines:
-                    GLOW_WIDTH:
-                        type: number
-                        label: Solid width
-                        range: 
-                            min: 0.
-                            max: 1.
-                            step: 0.01
-                    GLOW_BRIGHTNESS:
-                        type: number
-                        label: Glow Brightness
-                        range: 
-                            min: 0.
-                            max: 1.
-                            step: 0.01
-        base: lines
-        mix: [block, functions-aastep]
-        texcoords: true
-        blend: add
-        shaders:
-            defines:
-                GLOW_WIDTH: 0.4
-                GLOW_BRIGHTNESS: .25
-            blocks:
-                color: |
-                    vec4 glow_tmp_color = color;
-                    color = glow_tmp_color*(aastep(GLOW_WIDTH,1.-v_texcoord.x)*aastep(GLOW_WIDTH,v_texcoord.x));
-                    color += glow_tmp_color*(sin(v_texcoord.x*PI)*GLOW_BRIGHTNESS);
+                EPSILON: 0.0000001
 
-    lines-dots-glow:
-        base: lines
-        doc:
-            author: 
-                name: Patricio Gonzalez Vivo
-                twitter: patriciogv
-            version: 0.0.1
-            tangram-version: 0.0.7
-            licence: MIT
-            description: |
-                Apply a dot pattern to a line with some glow
-        ui:
-            shaders:
-                defines:
-                    DOTS_SIZE:
-                        type: number
-                        label: Size
-                        range: 
-                            min: 0.
-                            max: 1.
-                            step: 0.01
-                    DOTS_GLOW:
-                        type: number
-                        label: Glow amount
-                        range: 
-                            min: 0.
-                            max: 1.
-                            step: 0.01
-                    DOTS_SCALE:
-                        type: number
-                        label: Scale
-                        range: 
-                            min: 0.
-                            max: 2.
-                            step: 0.1
-        texcoords: true
-        blend: overlay
-        animated: true
-        shaders:
-            defines:
-                DOTS_SCALE: 2.
-                DOTS_SIZE: 0.15
-                DOTS_GLOW: .5
-            blocks:
-                color: |
-                    vec2 st = (fract(v_texcoord.xy)-.5)*DOTS_SCALE;
-                    float df = dot(st,st);
-                    color.a = 1.-step(DOTS_SIZE, df);
-                    color.a += smoothstep(1.,0.,df)*(DOTS_GLOW);
+                deg2rad(d): (((d)*3.1415926535897932384626433832795)/180.0)
+                rad2deg(d): (((d)*180.0)/3.1415926535897932384626433832795)
