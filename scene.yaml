@@ -1,5 +1,8 @@
 # Author: Geraldine Sarmiento
 
+
+# Texture Shaders
+# Brett Camper and Peter Richardsom
 # Tangram Blocks
 # https://tangrams.github.io/blocks/
 # Patricio Gonzalez Vivo
@@ -22,10 +25,11 @@ global:
     scale: 5.
 
 textures:
-    dirt:
-        # url: images/dirt.gif
-        # url: images/stone.png
-        url: images/crystaldraw6.jpg
+    line-texture:
+        url: images/stipple2-r.png
+
+    palette:
+        url: images/ramp.png
 
 
 scene:
@@ -67,7 +71,8 @@ layers:
         data: { source: nextzen, layer: earth }
         draw:
             polygons:
-                style: dots
+                style: texture-terrain-earth
+                # style: texture-zooms2
                 order: global.feature_order
                 color: [1.000,1.000,1.000]
 
@@ -75,9 +80,267 @@ layers:
         data: { source: nextzen, layer: water }
         draw:
             polygons:
-                style: water
+                style: water-dots
+                # style: texture-zooms
                 color: [0.000,0.000,0.000]
                 order: global.feature_order
+
+    roads:
+        data: { source: nextzen, layer: roads }
+        draw:
+            lines:
+                width: 1px
+                order: global.feature_order
+
+        early:
+            filter: { $zoom: { max: 15 } }
+            draw:
+                lines:
+                    outline:
+                        order: global.feature_order
+
+        bridges-tunnels:
+            filter: { any: [is_bridge: true, is_tunnel: true] }
+            draw:
+                lines:
+                    # cap: butt
+                    outline:
+                        # except bridges and tunnels, their outlines should also self-sort
+                        order: global.feature_order
+
+        natural_earth_highways:
+            filter: { $zoom: { min: 5, max: 8 } }
+            draw:
+                lines:
+                    cap: round
+                    join: round
+                    color: [1.000,1.000,1.000]
+                    width: 1px
+            major_road:
+                filter: { kind: major_road }
+                draw:
+                    lines:
+                        color: [1.000,1.000,1.000]
+                        width: 1px
+            minor_road:
+                filter: { kind: minor_road }
+                draw:
+                    lines:
+                        color: [1.000,1.000,1.000]
+                        width: 1px
+            ferry:
+                filter: { kind: ferry }
+                draw:
+                    lines:
+                        visible: false
+                        color: red
+                        width: 1px
+
+        highway:
+            filter: { kind: highway, $zoom: { min: 8 } }
+            draw:
+                lines:
+                    color: [1.000,1.000,1.000]
+                    width: [[5, 0px], [8, 1px], [14, 2px], [16, 6.5px], [17, 20m]]
+                    # width: 1px
+
+            link:
+                filter: { is_link: true } # on- and off-ramps, etc
+                draw:
+                    lines:
+                        color: [1.000,1.000,1.000]
+                        # width: [[9, 1px], [14, 2.5px], [16, 4px], [18, 4m]]
+                        width: 1px
+                        cap: butt
+                early_link:
+                    filter: { $zoom: { max: 15 } }
+                    draw:
+                        lines:
+                            # except bridges and tunnels, their outlines should also self-sort
+                            order: 352
+                tunnel-link:
+                    filter: {is_tunnel: true, $zoom: {min: 13} }
+                    draw:
+                        lines:
+                            color: [1.000,1.000,1.000]
+
+            # tunnel:
+            #     filter: {is_tunnel: true, $zoom: {min: 13} }
+            #     draw:
+            #         lines:
+            #             color: [1.000,1.000,1.000]
+            #             outline:
+            #                 color: [0.700,0.700,0.700]
+
+            highway_bridge:
+                filter: {is_bridge: true}
+                draw:
+                    lines:
+                        cap: round
+                        outline:
+                            cap: butt
+
+        major_road:
+            filter: { kind: major_road, $zoom: { min: 8 } }
+            # default style
+            draw:
+                lines:
+                    color: [1.000,1.000,1.000]
+                    width: [[13, 1px], [14, 1px]]
+            trunk_primary:
+                filter: { kind_detail: [trunk, primary] }
+                draw:
+                    lines:
+                        color: [1.000,1.000,1.000]
+                        width: [[8, 0.6px], [9, 0.75px], [10, 1.5px], [13, 2.5px], [14, 4.5px], [15, 5.5px], [16, 7.0px], [19, 14m]]
+                early:
+                    filter: { $zoom: { max: 16 } }
+                    draw:
+                        lines:
+                            order: 352
+                            outline:
+                                order: function() { return feature.sort_rank + 2; }
+                    primary:
+                        filter: { kind: [primary] }
+                        draw:
+                            lines:
+                                outline:
+                                    order: function() { return feature.sort_rank + 1; }
+                routes:
+                    filter: { ref: true }
+                    draw:
+                        lines:
+                            color: [1.000,1.000,1.000]
+                            width: [[8, 1.0px], [9, 1.5px], [10, 2.0px], [14, 3.5px], [15, 4.5px], [16, 6.0px], [17, 12m]]
+                    early:
+                        filter: { $zoom: { max: 16 } }
+                        draw:
+                            lines:
+                                order: function() { return feature.sort_rank + 2; }
+                                outline:
+                                    order: 353
+                    tunnel:
+                        filter: { is_tunnel: true, $zoom: { min: 13 } }
+                        draw:
+                            lines:
+                                color: [1.000,1.000,1.000]
+            link:
+                filter: { is_link: true } # on- and off-ramps, etc
+                draw:
+                    lines:
+                        color: [1.000,1.000,1.000]
+                        width: 0.5px
+            tunnel:
+                filter: { is_tunnel: true, $zoom: { min: 13 } }
+                draw:
+                    lines:
+                        color: [1.000,1.000,1.000]
+            secondary:
+                filter: { kind_detail: secondary }
+                draw:
+                    lines:
+                        color: [1.000,1.000,1.000]
+                        width: [[11, 1.0px], [12, 1.0px], [13, 2.0px], [14, 3.5px], [15, 4.5px], [16, 7.0px], [19, 16m]]
+                early:
+                    filter: { $zoom: { max: 16 } }
+                    draw:
+                        lines:
+                            order: 352
+                routes:
+                    filter: { ref: true, $zoom: { min: 12 } }
+                    draw:
+                        lines:
+                            color: [1.000,1.000,1.000]
+                            width: 0.5px
+                    early:
+                        filter: { $zoom: { max: 15 } }
+                        draw:
+                            lines:
+                                order: function() { return feature.sort_rank + 2; }
+                                outline:
+                                    order: 353
+                    tunnel:
+                        filter: {is_tunnel: true, $zoom: { min: 13 } }
+                        draw:
+                            lines:
+                                color: [1.000,1.000,1.000]
+            tertiary:
+                filter: { kind_detail: [tertiary, tertiary_link] }
+                draw:
+                    lines:
+                        color: [1.000,1.000,1.000]
+                        width: [[11, 0.5px], [12, .75px], [14, 2.5px], [15, 4.0px], [16, 6.5px], [17, 7.5px], [19, 14m]]
+                early:
+                    filter: { $zoom: { max: 15 } }
+                    draw:
+                        lines:
+                            order: 352
+                routes:
+                    filter: { ref: true, $zoom: { min: 12 } }
+                    draw:
+                        lines:
+                            color: [1.000,1.000,1.000]
+                            width: 0.5px
+                    early:
+                        filter: { $zoom: { max: 15 } }
+                        draw:
+                            lines:
+                                order: function() { return feature.sort_rank + 3; }
+                                outline:
+                                    order: 353
+                    tunnel:
+                        filter: { is_tunnel: true, $zoom: { min: 13 } }
+                        draw:
+                            lines:
+                                color: [1.000,1.000,1.000]
+                link:
+                    filter: { is_link: true } # on- and off-ramps, etc
+                    draw:
+                        lines:
+                            color: [1.000,1.000,1.000]
+                            width: 0.5px
+
+        minor_road:
+            filter: { kind: minor_road, not: { kind_detail: service }, $zoom: { min: 8 } }
+            draw:
+                lines:
+                    color: [1.000,1.000,1.000]
+                    width: [[11, 0.5px], [12, 0.75px], [13, 1.0px], [14, 1.2px], [15, 2.5px], [16, 8m]]
+            early:
+                filter: { $zoom: { max: 16 } }
+                draw:
+                    lines:
+                        order: 350
+            round:
+                filter: { $zoom: { min: 17 } }
+                draw:
+                    lines:
+                        cap: round
+                        join: round
+
+            tunnel:
+                filter: {is_tunnel: true, $zoom: { min: 13 } }
+                draw:
+                    lines:
+                        color: [0.000,0.000,0.000]
+            minor_road_bridge:
+                filter: { is_bridge: true }
+                draw:
+                    lines:
+                        cap: round
+
+        path:
+            filter:
+                all:
+                    - $zoom: { min: 16 }
+                    - kind: [path, portage_way]
+                not:
+                    - kind_detail: [steps, track, pier]
+            draw:
+                lines:
+                    # style: dashed-lines
+                    color: [1.000,1.000,1.000]
+                    width: [[14, 0.5px], [15, 1.5px], [17, 3m]]
 
     landuse:
         data: { source: nextzen }
@@ -95,7 +358,7 @@ layers:
                     - protect_class: ['2','3','5']
             draw:
                 polygons:
-                    style: park
+                    style: texture-terrain-park
                     color: [1.000,1.000,1.000]
                     visible: true
             us_national_park:
@@ -106,7 +369,7 @@ layers:
                         - protect_class: ['2','3','5']
                 draw:
                     polygons:
-                        style: park
+                        style: texture-terrain-park
                         color: [0.300,0.300,0.300]
                         visible: true
 
@@ -118,7 +381,7 @@ layers:
                 not: { protect_class: ['2','3','5']}
             draw:
                 polygons:
-                    style: conservation
+                    style: texture-terrain-conservation
                     color: [0.300,0.300,0.300]
                     visible: true
 
@@ -131,7 +394,8 @@ layers:
                     - operator: ['United States Forest Service']
             draw:
                 polygons:
-                    style: forest
+                    # style: forest
+                    style: texture-terrain-park
                     color: [0.300,0.300,0.300]
                     visible: true
 
@@ -139,77 +403,88 @@ layers:
             filter: { kind: [forest, natural_forest, wood, natural_wood, natural_park], $zoom: { min: 10 }, not: { operator: "United States Forest Service" } }
             draw:
                 polygons:
-                    style: forest
+                    # style: forest
+                    style: texture-terrain-forest
                     color: [0.300,0.300,0.300]
                     visible: true
 
-        # parks-and-national-forests-not-national-park:
-        #     filter:
-        #         all:
-        #             - $zoom: { min: 4 }
-        #             - kind: [park, national_park]
-        #         any:
-        #             - not: { operator: [ "United States National Park Service", "United States Forest Service" ] }
-        #             - not: { protect_class: ['2','3','5','6'] }
-        #     # default for national forests and more?
-        #     draw:
-        #         polygons:
-        #             # style: grid-green
-        #             style: green-grid
-        #             color: [0.300,0.300,0.300]
-        #             visible: true
-        #         lines:
-        #             color: [0.900,0.900,0.900]
-        #             width: 2px
-        #             visible: true
-        #     national_park:
-        #         #filter: function() { return feature.name && (feature.name.indexOf('National Park') > -1); }
-        #         filter:
-        #             all:
-        #                 - kind: national_park
-        #                 - not: [ protect_class: ['2','3','5','6'], operator: [ "United States National Park Service"] ]
-        #         draw:
-        #             polygons:
-        #                 # style: grid-green
-        #                 style: green-grid
-        #                 visible: true
-
-    buildings:
-        data: { source: nextzen, layer: buildings }
-        filter:
-            not: { location: underground }
-        draw:
-            polygons:
-                visible: false
-                order: 329
-                color: [1.000,1.000,1.000]
-            lines:
-                visible: false
-                order: 329
-
-        footprints:
+        parks-and-national-forests-not-national-park:
             filter:
+                all:
+                    - $zoom: { min: 4 }
+                    - kind: [park, national_park]
                 any:
-                    - { $zoom: [13], scale_rank: [1,2,3] }
-                    - { $zoom: [14], scale_rank: [1,2,3] }
-                    - { $zoom: [15], height: { min: 100 } }
-                    - { $zoom: [15], area: { min: 700 } }
-                    - { $zoom: [15], volume: { min: 100000 } }
-                    - { $zoom: [16], area: { min: 100 } }
-                    - { $zoom: [16], volume: { min: 50000 } }
-                    - { $zoom: { min: 17 }, area: true }
+                    - not: { operator: [ "United States National Park Service", "United States Forest Service" ] }
+                    - not: { protect_class: ['2','3','5','6'] }
+            # default for national forests and more?
             draw:
                 polygons:
+                    # style: terrain-dots
+                    style: texture-terrain-park
+                    color: [0.300,0.300,0.300]
                     visible: true
-                    style: diagonal-dots
+            national_park:
+                #filter: function() { return feature.name && (feature.name.indexOf('National Park') > -1); }
+                filter:
+                    all:
+                        - kind: texture-terrain-park
+                        - not: [ protect_class: ['2','3','5','6'], operator: [ "United States National Park Service"] ]
+                draw:
+                    polygons:
+                        visible: true
+
+    # buildings:
+    #     data: { source: nextzen, layer: buildings }
+    #     filter:
+    #         not: { location: underground }
+    #     draw:
+    #         polygons:
+    #             visible: false
+    #             order: 329
+    #             color: [1.000,1.000,1.000]
+    #         lines:
+    #             visible: false
+    #             order: 329
+
+    #     footprints:
+    #         filter:
+    #             any:
+    #                 - { $zoom: [13], scale_rank: [1,2,3] }
+    #                 - { $zoom: [14], scale_rank: [1,2,3] }
+    #                 - { $zoom: [15], height: { min: 100 } }
+    #                 - { $zoom: [15], area: { min: 700 } }
+    #                 - { $zoom: [15], volume: { min: 100000 } }
+    #                 - { $zoom: [16], area: { min: 100 } }
+    #                 - { $zoom: [16], volume: { min: 50000 } }
+    #                 - { $zoom: { min: 17 }, area: true }
+    #         draw:
+    #             polygons:
+    #                 visible: true
+    #                 style: diagonal-dots
 
 styles:
+    # dots:
+    #     base: polygons
+    #     mix: texture_x4
+    #     shaders:
+    #         uniforms:
+    #             u_customtexture: images/dots2.jpg
+
     dots:
         base: polygons
-        mix: texture_x4
+        mix: texture
         shaders:
             uniforms:
                 u_customtexture: images/dots2.jpg
+                u_scale: 4
+
+    earth-dots2:
+        base: polygons
+        mix: texture
+        shaders:
+            uniforms:
+                u_customtexture: images/earth-dots2.jpg
+                u_scale: 1
 
     diagonal-dots:
         base: polygons
@@ -218,12 +493,12 @@ styles:
             uniforms:
                 u_customtexture: images/diagonal-dot.jpg
 
-    water:
+    water-dots:
         base: polygons
         mix: texture_x1
         shaders:
             uniforms:
-                u_customtexture: images/water.jpg
+                u_customtexture: images/water-dots1.jpg
 
     conservation:
         base: polygons
@@ -239,12 +514,385 @@ styles:
             uniforms:
                 u_customtexture: images/forest1.jpg
 
+    forest2:
+        base: polygons
+        mix: texture_x1
+        shaders:
+            uniforms:
+                u_customtexture: images/forest2.jpg
+
     park:
         base: polygons
         mix: texture_x1
         shaders:
             uniforms:
                 u_customtexture: images/park2.jpg
+
+    parks2:
+        base: polygons
+        mix: texture_x1
+        shaders:
+            uniforms:
+                u_customtexture: images/park4.jpg
+
+    parks3:
+        base: polygons
+        mix: texture_x1
+        shaders:
+            uniforms:
+                u_customtexture: images/park3.jpg
+
+    texture-terrain-conservation:
+        base: polygons
+        raster: custom
+        shaders:
+            uniforms:
+                # two textures to cross-fade between
+                u_textures:
+                    - images/water-brush3.jpg
+                    # - https://raw.githubusercontent.com/sensescape/bw-texture/master/images/water-brush4.jpg
+                    - images/water-brush1.jpg
+                u_zoom_fade: [12.5, 13] # zooms to start/stop cross-fade
+                u_scale: 1. # number of times to repeat texture in a tile
+                u_light: [-0.5, 0.5, -0.5] # lights are flipped to match sat hillshade
+                u_ambient: 0.5
+            blocks:
+                position: |
+                    // make tile worldspace coordinates available to the global block
+                    v_pos = modelPosition();
+                global: |
+                    varying vec4 v_pos;
+                    vec4 TileTexture(sampler2D tex, float scale) {
+                        // CONTROLS
+                        // how smooth should the transition be?
+                        // 0 = snapping, 1 = continuous smoothstep crossfade
+                        float smoothness = .75;
+                        vec2 IN = v_pos.xy * scale * exp2(floor(u_map_position.z)-u_tile_origin.z);
+                        vec2 OUT = v_pos.xy * scale * exp2(floor(u_map_position.z)-u_tile_origin.z + 1.);
+                        vec4 intex = texture2D(tex,fract(IN));
+                        vec4 outtex = texture2D(tex,fract(OUT));
+                        float texf;
+                        //// linear transition
+                        // texf = fract(u_map_position.z);
+                        //// use smoothstep instead
+                        float tx = (1. - smoothness) * .5;
+                        texf = smoothstep(tx, 1.-tx, fract(u_map_position.z));
+                        return mix(intex, outtex, texf);
+                    }
+                color: |
+                    // float dz = clamp((u_map_position.z - u_zoom_fade[0]) / (u_zoom_fade[1] - u_zoom_fade[0]), 0., 1.);
+                    // color.rgb = TileTexture(u_textures[0],u_scale).rgb;
+
+                    // simple directional light with Lambert shading
+                    vec3 terrain = normalize(sampleRaster(0).xyz *2. - 1.4); // terrain surface normal
+                    float diffuse = clamp(dot(terrain, normalize(-u_light)), 0., 1.);
+                    float dz = clamp((u_ambient) + (diffuse), 0., 1.);
+
+                    // brightness at which terrain texture fade starts
+                    float edge = 0.85;
+
+                    // controls terrain texture fade transition
+                    float feather =
+                        TANGRAM_EPSILON; // hard edge
+                        // 0.025; // in between
+                        // 0.05; // soft edge
+
+                    color.rgb = mix(
+                        TileTexture(u_textures[0],u_scale).rgb,
+                        TileTexture(u_textures[1],u_scale).rgb,
+                        // 1.-step(dz, u_edge) // hard edge
+                        smoothstep(edge - feather, edge + feather, dz)
+                    );
+
+    texture-terrain-park:
+        base: polygons
+        raster: custom
+        shaders:
+            uniforms:
+                # two textures to cross-fade between
+                u_textures:
+                    - images/park.jpg
+                    # - https://raw.githubusercontent.com/sensescape/bw-texture/master/images/water-brush4.jpg
+                    - images/park-dots1.jpg
+                u_zoom_fade: [12.5, 13] # zooms to start/stop cross-fade
+                u_scale: 1. # number of times to repeat texture in a tile
+                u_light: [-0.5, 0.5, -0.5] # lights are flipped to match sat hillshade
+                u_ambient: 0.5
+            blocks:
+                position: |
+                    // make tile worldspace coordinates available to the global block
+                    v_pos = modelPosition();
+                global: |
+                    varying vec4 v_pos;
+                    vec4 TileTexture(sampler2D tex, float scale) {
+                        // CONTROLS
+                        // how smooth should the transition be?
+                        // 0 = snapping, 1 = continuous smoothstep crossfade
+                        float smoothness = .75;
+                        vec2 IN = v_pos.xy * scale * exp2(floor(u_map_position.z)-u_tile_origin.z);
+                        vec2 OUT = v_pos.xy * scale * exp2(floor(u_map_position.z)-u_tile_origin.z + 1.);
+                        vec4 intex = texture2D(tex,fract(IN));
+                        vec4 outtex = texture2D(tex,fract(OUT));
+                        float texf;
+                        //// linear transition
+                        // texf = fract(u_map_position.z);
+                        //// use smoothstep instead
+                        float tx = (1. - smoothness) * .5;
+                        texf = smoothstep(tx, 1.-tx, fract(u_map_position.z));
+                        return mix(intex, outtex, texf);
+                    }
+                color: |
+                    // float dz = clamp((u_map_position.z - u_zoom_fade[0]) / (u_zoom_fade[1] - u_zoom_fade[0]), 0., 1.);
+                    // color.rgb = TileTexture(u_textures[0],u_scale).rgb;
+
+                    // simple directional light with Lambert shading
+                    vec3 terrain = normalize(sampleRaster(0).xyz *2. - 1.4); // terrain surface normal
+                    float diffuse = clamp(dot(terrain, normalize(-u_light)), 0., 1.);
+                    float dz = clamp((u_ambient) + (diffuse), 0., 1.);
+
+                    // brightness at which terrain texture fade starts
+                    float edge = 0.85;
+
+                    // controls terrain texture fade transition
+                    float feather =
+                        TANGRAM_EPSILON; // hard edge
+                        // 0.025; // in between
+                        // 0.05; // soft edge
+
+                    color.rgb = mix(
+                        TileTexture(u_textures[0],u_scale).rgb,
+                        TileTexture(u_textures[1],u_scale).rgb,
+                        // 1.-step(dz, u_edge) // hard edge
+                        smoothstep(edge - feather, edge + feather, dz)
+                    );
+
+    texture-terrain-forest:
+        base: polygons
+        raster: custom
+        shaders:
+            uniforms:
+                # two textures to cross-fade between
+                u_textures:
+                    - images/forest1.jpg
+                    # - https://raw.githubusercontent.com/sensescape/bw-texture/master/images/water-brush4.jpg
+                    - images/forest2.jpg
+                u_zoom_fade: [12.5, 13] # zooms to start/stop cross-fade
+                u_scale: 1. # number of times to repeat texture in a tile
+                u_light: [-0.5, 0.5, -0.5] # lights are flipped to match sat hillshade
+                u_ambient: 0.5
+            blocks:
+                position: |
+                    // make tile worldspace coordinates available to the global block
+                    v_pos = modelPosition();
+                global: |
+                    varying vec4 v_pos;
+                    vec4 TileTexture(sampler2D tex, float scale) {
+                        // CONTROLS
+                        // how smooth should the transition be?
+                        // 0 = snapping, 1 = continuous smoothstep crossfade
+                        float smoothness = .75;
+                        vec2 IN = v_pos.xy * scale * exp2(floor(u_map_position.z)-u_tile_origin.z);
+                        vec2 OUT = v_pos.xy * scale * exp2(floor(u_map_position.z)-u_tile_origin.z + 1.);
+                        vec4 intex = texture2D(tex,fract(IN));
+                        vec4 outtex = texture2D(tex,fract(OUT));
+                        float texf;
+                        //// linear transition
+                        // texf = fract(u_map_position.z);
+                        //// use smoothstep instead
+                        float tx = (1. - smoothness) * .5;
+                        texf = smoothstep(tx, 1.-tx, fract(u_map_position.z));
+                        return mix(intex, outtex, texf);
+                    }
+                color: |
+                    // float dz = clamp((u_map_position.z - u_zoom_fade[0]) / (u_zoom_fade[1] - u_zoom_fade[0]), 0., 1.);
+                    // color.rgb = TileTexture(u_textures[0],u_scale).rgb;
+
+                    // simple directional light with Lambert shading
+                    vec3 terrain = normalize(sampleRaster(0).xyz *2. - 1.4); // terrain surface normal
+                    float diffuse = clamp(dot(terrain, normalize(-u_light)), 0., 1.);
+                    float dz = clamp((u_ambient) + (diffuse), 0., 1.);
+
+                    // brightness at which terrain texture fade starts
+                    float edge = 0.85;
+
+                    // controls terrain texture fade transition
+                    float feather =
+                        TANGRAM_EPSILON; // hard edge
+                        // 0.025; // in between
+                        // 0.05; // soft edge
+
+                    color.rgb = mix(
+                        TileTexture(u_textures[0],u_scale).rgb,
+                        TileTexture(u_textures[1],u_scale).rgb,
+                        // 1.-step(dz, u_edge) // hard edge
+                        smoothstep(edge - feather, edge + feather, dz)
+                    );
+
+    texture-terrain-earth:
+        base: polygons
+        raster: custom
+        shaders:
+            uniforms:
+                # two textures to cross-fade between
+                u_textures:
+                    - images/earth-dots5.jpg
+                    - images/earth-dots2.jpg
+                    # - images/earth-dots6.jpg
+                    # - images/earth-dots5.jpg
+                u_zoom_fade: [12.5, 13] # zooms to start/stop cross-fade
+                u_scale: 1. # number of times to repeat texture in a tile
+                u_light: [-0.5, 0.5, -0.5] # lights are flipped to match sat hillshade
+                u_ambient: 0.5
+            blocks:
+                position: |
+                    // make tile worldspace coordinates available to the global block
+                    v_pos = modelPosition();
+                global: |
+                    varying vec4 v_pos;
+                    vec4 TileTexture(sampler2D tex, float scale) {
+                        // CONTROLS
+                        // how smooth should the transition be?
+                        // 0 = snapping, 1 = continuous smoothstep crossfade
+                        float smoothness = .75;
+                        vec2 IN = v_pos.xy * scale * exp2(floor(u_map_position.z)-u_tile_origin.z);
+                        vec2 OUT = v_pos.xy * scale * exp2(floor(u_map_position.z)-u_tile_origin.z + 1.);
+                        vec4 intex = texture2D(tex,fract(IN));
+                        vec4 outtex = texture2D(tex,fract(OUT));
+                        float texf;
+                        //// linear transition
+                        // texf = fract(u_map_position.z);
+                        //// use smoothstep instead
+                        float tx = (1. - smoothness) * .5;
+                        texf = smoothstep(tx, 1.-tx, fract(u_map_position.z));
+                        return mix(intex, outtex, texf);
+                    }
+                color: |
+                    // float dz = clamp((u_map_position.z - u_zoom_fade[0]) / (u_zoom_fade[1] - u_zoom_fade[0]), 0., 1.);
+                    // color.rgb = TileTexture(u_textures[0],u_scale).rgb;
+
+                    // simple directional light with Lambert shading
+                    vec3 terrain = normalize(sampleRaster(0).xyz *2. - 1.4); // terrain surface normal
+                    float diffuse = clamp(dot(terrain, normalize(-u_light)), 0., 1.);
+                    float dz = clamp((u_ambient) + (diffuse), 0., 1.);
+
+                    // brightness at which terrain texture fade starts
+                    float edge = 0.85;
+
+                    // controls terrain texture fade transition
+                    float feather =
+                        TANGRAM_EPSILON; // hard edge
+                        // 0.025; // in between
+                        // 0.05; // soft edge
+
+                    color.rgb = mix(
+                        TileTexture(u_textures[0],u_scale).rgb,
+                        TileTexture(u_textures[1],u_scale).rgb,
+                        // 1.-step(dz, u_edge) // hard edge
+                        smoothstep(edge - feather, edge + feather, dz)
+                    );
+
+    textured-lines:
+        base: lines
+        lighting: false
+        material:
+            diffuse:
+                texture: line-texture
+                mapping: uv
+        shaders:
+            uniforms:
+                u_tex: line-texture
+            blocks:
+                color: |
+                    // have to do a fract on the texcoord to get it to repeat over the length of the line
+                    color = texture2D(u_tex, fract(vec2(v_texcoord.x, v_texcoord.y))); // straight texture
+                    // color *= texture2D(u_tex, fract(vec2(v_texcoord.x, v_texcoord.y))); // tinted
+                    //color *= 1. - texture2D(u_tex, fract(vec2(v_texcoord.x, v_texcoord.y))); // inverted & tinted
+                    //color.a = texture2D(u_tex, fract(vec2(v_texcoord.x, v_texcoord.y))).a; // use texture's alpha
+
+    texture:
+        base: polygons
+        shaders:
+            uniforms:
+                u_customtexture: images/uv-coords.png
+                u_scale: 1. # number of times to repeat texture in a tile
+            blocks:
+                position: |
+                    // make tile worldspace coordinates available to the global block
+                    v_pos = modelPosition();
+                global: |
+                    varying vec4 v_pos;
+                    vec4 TileTexture(sampler2D tex, float scale) {
+                        // CONTROLS
+                        // how smooth should the transition be?
+                        // 0 = snapping, 1 = continuous smoothstep crossfade
+                        float smoothness = .75;
+                        vec2 IN = v_pos.xy * scale * exp2(floor(u_map_position.z)-u_tile_origin.z);
+                        vec2 OUT = v_pos.xy * scale * exp2(floor(u_map_position.z)-u_tile_origin.z + 1.);
+                        vec4 intex = texture2D(tex,fract(IN));
+                        vec4 outtex = texture2D(tex,fract(OUT));
+                        float texf;
+                        //// linear transition
+                        // texf = fract(u_map_position.z);
+                        //// use smoothstep instead
+                        float tx = (1. - smoothness) * .5;
+                        texf = smoothstep(tx, 1.-tx, fract(u_map_position.z));
+                        return mix(intex, outtex, texf);
+                    }
+                color: |
+                    color.rgb = TileTexture(u_customtexture,u_scale).rgb;
+
+    texture-zooms:
+        base: polygons
+        shaders:
+            uniforms:
+                # two textures to cross-fade between
+                u_textures:
+                    - images/water.jpg
+                    # - https://raw.githubusercontent.com/sensescape/bw-texture/master/images/water-brush4.jpg
+                    - images/dots2.jpg
+                u_zoom_fade: [12.5, 13] # zooms to start/stop cross-fade
+                u_scale: 1. # number of times to repeat texture in a tile
+            blocks:
+                position: |
+                    // make tile worldspace coordinates available to the global block
+                    v_pos = modelPosition();
+                global: |
+                    varying vec4 v_pos;
+                    vec4 TileTexture(sampler2D tex, float scale) {
+                        // CONTROLS
+                        // how smooth should the transition be?
+                        // 0 = snapping, 1 = continuous smoothstep crossfade
+                        float smoothness = .75;
+                        vec2 IN = v_pos.xy * scale * exp2(floor(u_map_position.z)-u_tile_origin.z);
+                        vec2 OUT = v_pos.xy * scale * exp2(floor(u_map_position.z)-u_tile_origin.z + 1.);
+                        vec4 intex = texture2D(tex,fract(IN));
+                        vec4 outtex = texture2D(tex,fract(OUT));
+                        float texf;
+                        //// linear transition
+                        // texf = fract(u_map_position.z);
+                        //// use smoothstep instead
+                        float tx = (1. - smoothness) * .5;
+                        texf = smoothstep(tx, 1.-tx, fract(u_map_position.z));
+                        return mix(intex, outtex, texf);
+                    }
+                color: |
+                    float dz = clamp((u_map_position.z - u_zoom_fade[0]) / (u_zoom_fade[1] - u_zoom_fade[0]), 0., 1.);
+                    // color.rgb = TileTexture(u_textures[0],u_scale).rgb;
+                    color.rgb = mix(
+                        TileTexture(u_textures[0],u_scale).rgb,
+                        TileTexture(u_textures[1],u_scale).rgb,
+                        dz);
+
+    texture-zooms2:
+        mix: texture-zooms
+        shaders:
+            uniforms:
+                u_textures:
+                    - images/park4.jpg
+                    # - https://raw.githubusercontent.com/sensescape/bw-texture/master/images/water.jpg
+                    - images/forest1.jpg
+                u_zoom_fade: [12.25, 13.25]
+                u_scale: 1.
 
     texture_x4:
         base: polygons
@@ -775,4 +1423,106 @@ styles:
                         #else
                             return step(threshold, value);
                         #endif
+                    }
+
+    terrain-dots:
+        base: polygons
+        mix: [elevation-ramp, terrain-pattern, colorized-earth]
+
+    colorized-earth:
+        shaders:
+            uniforms:
+                u_tint: [0.900,0.900,0.900]
+                u_fill: [0.100,0.100,0.100]
+            blocks:
+                filter: |
+                    color.rgb = mix(u_tint.rgb, u_fill.rgb, color.rgb);
+
+    terrain-pattern:
+        base: polygons
+        mix: [elevation-normal, functions-zoom, polygons-dots]
+        shaders:
+            defines:
+                ZOOM_START: 0.
+                ZOOM_END: 13.
+                DOTS_DIR: vec3(0.600,-0.950,0.520)
+                DOTS_COLOR: vec3(0.)
+                DOTS_BACKGROUND_COLOR: vec3(1.)
+                DOTS_SCALE: 35.
+                DOTS_SIZE: mix(shade*10.,shade*2.,zoom())
+            blocks:
+                normal: |
+                    float shade = dot(normal, DOTS_DIR);
+                    // modify brightness and contrast
+                    shade = shade*shade*shade * -2. + .65;
+                    // reset normal to prevent standard terrain shading mixing with dots
+                    normal = vec3(0,0,1);
+
+    elevation-normal:
+        raster: custom
+        shaders:
+            defines:
+                NORMAL_TEXTURE_INDEX: 0
+            blocks:
+                normal: |
+                    vec4 normal_elv_raster = sampleRaster(int(NORMAL_TEXTURE_INDEX));
+                    normal = (normal_elv_raster.rgb-.5)*2.;
+
+    elevation-ramp:
+        shaders:
+            uniforms:
+                u_ramp: palette
+            blocks:
+                color: |
+                    color = texture2D(u_ramp, vec2((1.-normal_elv_raster.a),.5));
+        raster: custom
+
+    polygons-dots:
+        base: polygons
+        mix:
+            - space-tile
+            - tiling-brick
+            - shapes-circle
+        shaders:
+            blocks:
+                global: |
+                    float TileDots(float scale, float size) {
+
+                        // controls
+                        float DOT_SIZE = size * .1; // bigger value = smaller dots
+                        float SPEED = 2.; // bigger value = faster transition
+
+                        vec2 tc = getTileCoords() * size * pow(2., floor(u_map_position.z) - abs(u_tile_origin.z));
+                        vec2 IN = brick(tc, 2.);
+                        float A = circleDF(vec2(.5) - IN) * DOT_SIZE;
+                        vec2 OUT = brick(tc, 4.);
+                        float B = circleDF(vec2(.5) - OUT) * DOT_SIZE;
+
+                        // keep B dots big as they fade in, to maintain density
+                        B *= pow(fract(u_map_position.z)*.95, SPEED);
+
+                        float d = mix(A, B, pow(fract(u_map_position.z), SPEED));
+                        return aastep(scale, d);
+                    }
+
+                color: |
+                    color.rgb = mix(DOTS_COLOR, DOTS_BACKGROUND_COLOR, TileDots(DOTS_SIZE, DOTS_SCALE));
+
+    shapes-circle:
+        mix: functions-aastep
+        shaders:
+            defines:
+                PI: 3.14159265358979323846
+            blocks:
+                global: |
+                    // get distance field of a Circle
+                    // ================================
+                    float circleDF (vec2 st) {
+                        return dot(st,st);
+                    }
+                    //
+                    // Draw a circle in the middle of the ST space
+                    // ================================
+                    float circle (vec2 st, float radius) {
+                        return 1.-aastep(radius, circleDF(st-vec2(0.5))*PI);
                     }
