@@ -342,6 +342,38 @@ layers:
                     color: [1.000,1.000,1.000]
                     width: [[14, 0.5px], [15, 1.5px], [17, 3m]]
 
+        airport-lines:
+            filter: { kind: aeroway, kind_detail: [runway,taxiway] }
+            draw:
+                lines:
+                    order: global.feature_order
+                    color: [0.800,0.800,0.800]
+                    width: 2px
+            taxiway:
+                filter: { kind_detail: taxiway }
+                draw:
+                    lines:
+                        color: [1.000,1.000,1.000]
+                        width: [[12,0px],[15,3px],[20,8px]]
+                        outline:
+                            width: 0px
+            runway:
+                filter: { kind_detail: runway }
+                draw:
+                    lines:
+                        color: [1.000,1.000,1.000]
+                        width: [[9,0px],[11,1px],[13,5px],[15,30px],[20,100m]]
+                        outline:
+                            style: runway-glow
+                            color: [0.200,0.200,0.200]
+                            width: [[9,2px],[11,3px],[12,2px],[20,12px]]
+                runway-detail:
+                    filter: { $zoom: { min: 12 } }
+                    draw:
+                        runway-dots:
+                            color: [0.000,0.000,0.000]
+                            width: [[12,2px],[15,8px],[20,24px]]
+
     landuse:
         data: { source: nextzen }
         draw:
@@ -1332,3 +1364,115 @@ styles:
                     float circle (vec2 st, float radius) {
                         return 1.-aastep(radius, circleDF(st-vec2(0.5))*PI);
                     }
+
+    runway-glow:
+        base: lines
+        mix: [lines-glow]
+        shaders:
+            defines:
+                GLOW_WIDTH: 0.80
+                GLOW_BRIGHTNESS: .5
+
+    runway-dots:
+        base: lines
+        mix: [lines-dots-glow]
+        animated: true
+        shaders:
+            defines:
+                DOTS_ANIMATE: color.a *=abs(sin(v_texcoord.y+u_time))*1.0
+            blocks:
+                filter: |
+                    #ifdef DOTS_ANIMATE
+                    DOTS_ANIMATE;
+                    #endif
+
+    lines-glow:
+        doc:
+            author: 
+                name: Patricio Gonzalez Vivo
+                twitter: patriciogv
+            version: 0.0.1
+            tangram-version: 0.0.7
+            licence: MIT
+            description: |  
+                Add an exciting glow effect to your
+        ui:
+            shaders:
+                defines:
+                    GLOW_WIDTH:
+                        type: number
+                        label: Solid width
+                        range: 
+                            min: 0.
+                            max: 1.
+                            step: 0.01
+                    GLOW_BRIGHTNESS:
+                        type: number
+                        label: Glow Brightness
+                        range: 
+                            min: 0.
+                            max: 1.
+                            step: 0.01
+        base: lines
+        mix: [block, functions-aastep]
+        texcoords: true
+        blend: add
+        shaders:
+            defines:
+                GLOW_WIDTH: 0.4
+                GLOW_BRIGHTNESS: .25
+            blocks:
+                color: |
+                    vec4 glow_tmp_color = color;
+                    color = glow_tmp_color*(aastep(GLOW_WIDTH,1.-v_texcoord.x)*aastep(GLOW_WIDTH,v_texcoord.x));
+                    color += glow_tmp_color*(sin(v_texcoord.x*PI)*GLOW_BRIGHTNESS);
+
+    lines-dots-glow:
+        base: lines
+        doc:
+            author: 
+                name: Patricio Gonzalez Vivo
+                twitter: patriciogv
+            version: 0.0.1
+            tangram-version: 0.0.7
+            licence: MIT
+            description: |
+                Apply a dot pattern to a line with some glow
+        ui:
+            shaders:
+                defines:
+                    DOTS_SIZE:
+                        type: number
+                        label: Size
+                        range: 
+                            min: 0.
+                            max: 1.
+                            step: 0.01
+                    DOTS_GLOW:
+                        type: number
+                        label: Glow amount
+                        range: 
+                            min: 0.
+                            max: 1.
+                            step: 0.01
+                    DOTS_SCALE:
+                        type: number
+                        label: Scale
+                        range: 
+                            min: 0.
+                            max: 2.
+                            step: 0.1
+        texcoords: true
+        blend: overlay
+        animated: true
+        shaders:
+            defines:
+                DOTS_SCALE: 2.
+                DOTS_SIZE: 0.15
+                DOTS_GLOW: .5
+            blocks:
+                color: |
+                    vec2 st = (fract(v_texcoord.xy)-.5)*DOTS_SCALE;
+                    float df = dot(st,st);
+                    color.a = 1.-step(DOTS_SIZE, df);
+                    color.a += smoothstep(1.,0.,df)*(DOTS_GLOW);
