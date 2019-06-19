@@ -46,6 +46,19 @@ global:
     order_sub_8: function () { return (feature.sort_rank * 20 - 8); }
     order_sub_9: function () { return (feature.sort_rank * 20 - 9); }
 
+    pseudoRandomColor: |
+        function() {
+            return [
+                0.5 * (parseInt(feature.id, 12) / 100 % 1),     // jshint ignore:line
+                0.5 * (parseInt(feature.id, 12) / 10000 % 1),   // jshint ignore:line
+                0.5 * (parseInt(feature.id, 12) / 1000000 % 1), // jshint ignore:line
+                1
+            ];
+        }
+
+    building_extrude_height: |                  # building extrude height logic
+        function() { return feature.height || 70; }
+
 textures:
     line-texture:
         url: images/stipple2-r.png
@@ -875,11 +888,11 @@ layers:
         draw:
             polygons:
                 visible: false
-                order: 329
+                order: global.order
                 color: [0.800,0.800,0.800]
             lines:
                 visible: false
-                order: 329
+                order: global.order_add_1
                 color: [0.000,0.000,0.000]
 
         footprints:
@@ -900,6 +913,24 @@ layers:
                 # lines:
                 #     visible: true
                 #     width: 1px
+
+            extrude:
+                filter:
+                    all:
+                        - $zoom: { min: 15 }
+                        - height: { min: 200 }
+                        - not:
+                            - layer: [-1, -2, -3, -4, -5]
+                draw:
+                    polygons:
+                        visible: true
+                        color: [0.500,0.500,0.500]
+                        extrude: global.building_extrude_height
+                    lines:
+                        visible: true
+                        color: [1.000,1.000,1.000]
+                        width: [[12, .75px], [18, 1.0px]]
+                        extrude: global.building_extrude_height
 
         in_hospital:
             filter:
