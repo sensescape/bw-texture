@@ -2,7 +2,7 @@
 
 
 # Texture Shaders
-# Brett Camper and Peter Richardsom
+# Brett Camper and Peter Richardson
 # Tangram Blocks
 # https://tangrams.github.io/blocks/
 # Patricio Gonzalez Vivo
@@ -23,6 +23,28 @@ global:
     sdk_api_key: '3eqm2_bfTNGZ85ar20fVyA'     # set this value to your Mapzen API key
 
     scale: 5.
+
+    # Order functions
+    order_add_9: function () { return (feature.sort_rank * 20 + 9); }
+    order_add_8: function () { return (feature.sort_rank * 20 + 8); }
+    order_add_7: function () { return (feature.sort_rank * 20 + 7); }
+    order_add_6: function () { return (feature.sort_rank * 20 + 6); }
+    order_add_5: function () { return (feature.sort_rank * 20 + 5); }
+    order_add_4: function () { return (feature.sort_rank * 20 + 4); }
+    order_add_3: function () { return (feature.sort_rank * 20 + 3); }
+    order_add_2: function () { return (feature.sort_rank * 20 + 2); }
+    order_add_1: function () { return (feature.sort_rank * 20 + 1); }
+    feature_order: function() { return feature.sort_rank; }
+    order: function () { return (feature.sort_rank * 20) || 0; }
+    order_sub_1: function () { return (feature.sort_rank * 20 - 1); }
+    order_sub_2: function () { return (feature.sort_rank * 20 - 2); }
+    order_sub_3: function () { return (feature.sort_rank * 20 - 3); }
+    order_sub_4: function () { return (feature.sort_rank * 20 - 4); }
+    order_sub_5: function () { return (feature.sort_rank * 20 - 5); }
+    order_sub_6: function () { return (feature.sort_rank * 20 - 6); }
+    order_sub_7: function () { return (feature.sort_rank * 20 - 7); }
+    order_sub_8: function () { return (feature.sort_rank * 20 - 8); }
+    order_sub_9: function () { return (feature.sort_rank * 20 - 9); }
 
 textures:
     line-texture:
@@ -71,8 +93,10 @@ layers:
         data: { source: nextzen, layer: earth }
         draw:
             polygons:
+                # style: dots
                 style: texture-terrain-earth
                 # style: texture-zooms2
+                # style: terrain
                 order: global.feature_order
                 color: [1.000,1.000,1.000]
 
@@ -137,32 +161,106 @@ layers:
                         width: 1px
 
         highway:
-            filter: { kind: highway, $zoom: { min: 8 } }
-            draw:
-                lines:
-                    color: [1.000,1.000,1.000]
-                    width: [[5, 0px], [8, 1px], [14, 2px], [16, 6.5px], [17, 20m]]
-                    # width: 1px
-
-            link:
-                filter: { is_link: true } # on- and off-ramps, etc
+            filter:
+                kind: highway
+                $zoom: { min: 8 }
+            highway-z8:
+                filter:
+                    $zoom: { min: 8, max: 11 }
                 draw:
                     lines:
+                        style: roads-glow
                         color: [1.000,1.000,1.000]
-                        # width: [[9, 1px], [14, 2.5px], [16, 4px], [18, 4m]]
-                        width: 1px
-                        cap: butt
-                early_link:
-                    filter: { $zoom: { max: 15 } }
+                        width: [[8,4px],[11,9px]]
+
+            highway-z11:
+                filter:
+                    $zoom: { min: 11 }
+                draw:
+                    lines:
+                        order: global.order
+                        color: [1.000,1.000,1.000]
+                        width: [[8,0px],[9,0.25px],[10,1px],[12,1px],[13,2px],[14,3px],[15,5px],[16,5px],[17,9px],[18,16px],[19,12px]]
+                        outline:
+                            color: [0.000,0.000,0.000]
+                            width: [[8,0.5px],[9,1px],[12,1.25px],[15,1.5px],[16,1.5px],[17,0px]]
+                    highway-dashed:
+                        order: global.order_sub_1
+                        color: [0.000,0.000,0.000]
+                        width: [[8,0px],[16,8px],[17,15px],[18,22px],[19,23px]]
+                    highway-glow:
+                        order: global.order_sub_6
+                        color: [1.000,1.000,1.000]
+                        width: [[11,8px],[13,12px],[16,30px],[17,40px],[18,50px],[19,80px]]
+                    # highway-casing:
+                    #     order: global.order
+
+                highway-link:
+                    filter: { is_link: true } # on- and off-ramps, etc
                     draw:
                         lines:
-                            # except bridges and tunnels, their outlines should also self-sort
-                            order: 352
-                tunnel-link:
-                    filter: {is_tunnel: true, $zoom: {min: 13} }
+                            order: global.order_add_1
+                            width: [[8,0px],[9,0px],[11,0.25px],[12,0.25px],[13,1px],[14,1.5px],[15,2px],[17,3px],[18,9px],[19,12px],[20,20px]]
+                            outline:
+                                color: [1.000,1.000,1.000]
+                                width: [[8,0px],[9,0.5px],[15,1px],[18,1.5px]]
+                        highway-dashed:
+                            visible: false
+                        # highway-casing:
+                        #     visible: false
+                        highway-glow:
+                            visible: false
+
+                    highway-link-early:
+                        filter: { $zoom: { min: 13, max: 15 } }
+                        draw:
+                            lines:
+                                order: 352
+                            highway-dashed:
+                                visible: false
+                        highway-link-early-z17-18:
+                            filter: { $zoom: [17, 18]}
+                            draw:
+                                lines:
+                                    visible: false
+
+                highway-tunnel:
+                    filter: { is_tunnel: true, $zoom: { min: 13 } }
                     draw:
                         lines:
+                            color: [0.000,0.000,0.000]
+                            outline:
+                                color: [1.000,1.000,1.000]
+                        highway-dashed:
+                            visible: true
+                            color: [0.000,0.000,0.000]
+                        highway-glow:
+                            visible: true
                             color: [1.000,1.000,1.000]
+                        # highway-casing:
+                        #     color: [0.073,0.435,0.908]
+                        #     visible: true
+                    highway-tunnel-link:
+                        filter:
+                            is_link: true
+                        draw:
+                            highway-dashed:
+                                visible: false
+                            # highway-casing:
+                            #     visible: false
+                            highway-glow:
+                                visible: false
+
+            # Show 0 width roads one zoom before they have width, so they can scale up instead of popping in
+            # highway-z17:
+            #     filter:
+            #         $zoom: { min: 16 }
+            #     draw:
+            #         highway-casing:
+            #             visible: true
+            #             order: global.order_sub_2
+            #             color: [0.541,0.969,0.949]
+            #             width: [[8,0px],[16,10px],[17,18px],[18,34px],[19,45px]]
 
             # tunnel:
             #     filter: {is_tunnel: true, $zoom: {min: 13} }
@@ -179,6 +277,176 @@ layers:
                         cap: round
                         outline:
                             cap: butt
+
+        # ##### ROADS BLACK START
+
+        # major_road:
+        #     filter: { kind: major_road, $zoom: { min: 8 } }
+        #     # default style
+        #     draw:
+        #         lines:
+        #             color: [0.000,0.000,0.000]
+        #             width: [[13, 1px], [14, 1px]]
+        #     trunk_primary:
+        #         filter: { kind_detail: [trunk, primary] }
+        #         draw:
+        #             lines:
+        #                 color: [0.000,0.000,0.000]
+        #                 width: [[8, 0.6px], [9, 0.75px], [10, 1.5px], [13, 2.5px], [14, 4.5px], [15, 5.5px], [16, 7.0px], [19, 14m]]
+        #         early:
+        #             filter: { $zoom: { max: 16 } }
+        #             draw:
+        #                 lines:
+        #                     order: 352
+        #                     outline:
+        #                         order: function() { return feature.sort_rank + 2; }
+        #             primary:
+        #                 filter: { kind: [primary] }
+        #                 draw:
+        #                     lines:
+        #                         outline:
+        #                             order: function() { return feature.sort_rank + 1; }
+        #         routes:
+        #             filter: { ref: true }
+        #             draw:
+        #                 lines:
+        #                     color: [0.000,0.000,0.000]
+        #                     width: [[8, 1.0px], [9, 1.5px], [10, 2.0px], [14, 3.5px], [15, 4.5px], [16, 6.0px], [17, 12m]]
+        #             early:
+        #                 filter: { $zoom: { max: 16 } }
+        #                 draw:
+        #                     lines:
+        #                         order: function() { return feature.sort_rank + 2; }
+        #                         outline:
+        #                             order: 353
+        #             tunnel:
+        #                 filter: { is_tunnel: true, $zoom: { min: 13 } }
+        #                 draw:
+        #                     lines:
+        #                         color: [0.500,0.500,0.500]
+        #     link:
+        #         filter: { is_link: true } # on- and off-ramps, etc
+        #         draw:
+        #             lines:
+        #                 color: [0.000,0.000,0.000]
+        #                 width: 0.5px
+        #     tunnel:
+        #         filter: { is_tunnel: true, $zoom: { min: 13 } }
+        #         draw:
+        #             lines:
+        #                 color: [0.500,0.500,0.500]
+        #     secondary:
+        #         filter: { kind_detail: secondary }
+        #         draw:
+        #             lines:
+        #                 color: [0.000,0.000,0.000]
+        #                 width: [[11, 1.0px], [12, 1.0px], [13, 2.0px], [14, 3.5px], [15, 4.5px], [16, 7.0px], [19, 16m]]
+        #         early:
+        #             filter: { $zoom: { max: 16 } }
+        #             draw:
+        #                 lines:
+        #                     order: 352
+        #         routes:
+        #             filter: { ref: true, $zoom: { min: 12 } }
+        #             draw:
+        #                 lines:
+        #                     color: [0.000,0.000,0.000]
+        #                     width: 0.5px
+        #             early:
+        #                 filter: { $zoom: { max: 15 } }
+        #                 draw:
+        #                     lines:
+        #                         order: function() { return feature.sort_rank + 2; }
+        #                         outline:
+        #                             order: 353
+        #             tunnel:
+        #                 filter: {is_tunnel: true, $zoom: { min: 13 } }
+        #                 draw:
+        #                     lines:
+        #                         color: [0.000,0.000,0.000]
+        #     tertiary:
+        #         filter: { kind_detail: [tertiary, tertiary_link] }
+        #         draw:
+        #             lines:
+        #                 color: [0.000,0.000,0.000]
+        #                 width: [[11, 0.5px], [12, .75px], [14, 2.5px], [15, 4.0px], [16, 6.5px], [17, 7.5px], [19, 14m]]
+        #         early:
+        #             filter: { $zoom: { max: 15 } }
+        #             draw:
+        #                 lines:
+        #                     order: 352
+        #         routes:
+        #             filter: { ref: true, $zoom: { min: 12 } }
+        #             draw:
+        #                 lines:
+        #                     color: [0.000,0.000,0.000]
+        #                     width: 0.5px
+        #             early:
+        #                 filter: { $zoom: { max: 15 } }
+        #                 draw:
+        #                     lines:
+        #                         order: function() { return feature.sort_rank + 3; }
+        #                         outline:
+        #                             order: 353
+        #             tunnel:
+        #                 filter: { is_tunnel: true, $zoom: { min: 13 } }
+        #                 draw:
+        #                     lines:
+        #                         color: [0.000,0.000,0.000]
+        #         link:
+        #             filter: { is_link: true } # on- and off-ramps, etc
+        #             draw:
+        #                 lines:
+        #                     color: [0.000,0.000,0.000]
+        #                     width: 0.5px
+
+        # minor_road:
+        #     filter: { kind: minor_road, not: { kind_detail: service }, $zoom: { min: 8 } }
+        #     draw:
+        #         lines:
+        #             color: [0.000,0.000,0.000]
+        #             width: [[11, 0.5px], [12, 0.75px], [13, 1.0px], [14, 1.2px], [15, 2.5px], [16, 8m]]
+        #     early:
+        #         filter: { $zoom: { max: 16 } }
+        #         draw:
+        #             lines:
+        #                 order: 350
+        #     round:
+        #         filter: { $zoom: { min: 17 } }
+        #         draw:
+        #             lines:
+        #                 cap: round
+        #                 join: round
+
+        #     tunnel:
+        #         filter: {is_tunnel: true, $zoom: { min: 13 } }
+        #         draw:
+        #             lines:
+        #                 color: [0.500,0.500,0.500]
+        #     minor_road_bridge:
+        #         filter: { is_bridge: true }
+        #         draw:
+        #             lines:
+        #                 cap: round
+
+        # path:
+        #     filter:
+        #         all:
+        #             - $zoom: { min: 16 }
+        #             - kind: [path, portage_way]
+        #         not:
+        #             - kind_detail: [steps, track, pier]
+        #     draw:
+        #         lines:
+        #             # style: dashed-lines
+        #             color: [0.000,0.000,0.000]
+        #             width: [[14, 0.5px], [15, 1.5px], [17, 3m]]
+
+        # #####
+        # ##### ROADS BLACK END
+
+        ##### ROADS WHITE START
+        #####
 
         major_road:
             filter: { kind: major_road, $zoom: { min: 8 } }
@@ -342,6 +610,10 @@ layers:
                     color: [1.000,1.000,1.000]
                     width: [[14, 0.5px], [15, 1.5px], [17, 3m]]
 
+
+        ##### ROADS WHITE
+        ##### END
+
         airport-lines:
             filter: { kind: aeroway, kind_detail: [runway,taxiway] }
             draw:
@@ -470,41 +742,110 @@ layers:
                 kind: golf_course
             draw:
                 polygons:
-                    # style: texture-terrain-park
-                    style: terrain-dots
+                    # style: landuse-test
+                    # style: terrain-dots
+                    style: texture-terrain-earth
                     color: [0.000,0.000,0.000]
                     visible: true
 
-    # buildings:
-    #     data: { source: nextzen, layer: buildings }
-    #     filter:
-    #         not: { location: underground }
-    #     draw:
-    #         polygons:
-    #             visible: false
-    #             order: 329
-    #             color: [1.000,1.000,1.000]
-    #         lines:
-    #             visible: false
-    #             order: 329
+        hospital:
+                filter:
+                    kind: hospital
+                draw:
+                    polygons:
+                        style: glow-dots
+                        color: [0.900,0.900,0.900]
+                        visible: true
 
-    #     footprints:
-    #         filter:
-    #             any:
-    #                 - { $zoom: [13], scale_rank: [1,2,3] }
-    #                 - { $zoom: [14], scale_rank: [1,2,3] }
-    #                 - { $zoom: [15], height: { min: 100 } }
-    #                 - { $zoom: [15], area: { min: 700 } }
-    #                 - { $zoom: [15], volume: { min: 100000 } }
-    #                 - { $zoom: [16], area: { min: 100 } }
-    #                 - { $zoom: [16], volume: { min: 50000 } }
-    #                 - { $zoom: { min: 17 }, area: true }
-    #         draw:
-    #             polygons:
-    #                 visible: true
-    #                 style: diagonal-dots
+    buildings:
+        data: { source: nextzen, layer: buildings }
+        filter:
+            not: { location: underground }
+        draw:
+            polygons:
+                visible: false
+                order: 329
+                color: [0.800,0.800,0.800]
+            lines:
+                visible: false
+                order: 329
+                color: [0.000,0.000,0.000]
+
+        footprints:
+            filter:
+                any:
+                    - { $zoom: [13], scale_rank: [1,2,3] }
+                    - { $zoom: [14], scale_rank: [1,2,3] }
+                    - { $zoom: [15], height: { min: 100 } }
+                    - { $zoom: [15], area: { min: 700 } }
+                    - { $zoom: [15], volume: { min: 100000 } }
+                    - { $zoom: [16], area: { min: 100 } }
+                    - { $zoom: [16], volume: { min: 50000 } }
+                    - { $zoom: { min: 17 }, area: true }
+            draw:
+                polygons:
+                    visible: true
+                    style: building-dots
+                # lines:
+                #     visible: true
+                #     width: 1px
+
+        in_hospital:
+            filter:
+                landuse_kind: hospital
+            draw:
+                polygons:
+                    visible: true
+                    style: polygons-transparent
+                    color: [1.000,1.000,1.000,0.5]
+                lines:
+                    visible: true
+                    width: 1px
 
 styles:
+    no-texture:
+        base: polygons
+
+    polygons-transparent:
+        base: polygons
+        blend: overlay
+
+    terrain:
+        base: polygons
+        lighting: false
+        raster: normal
+        shaders:
+            uniforms:
+                # u_envmap: images/sphere-map2.jpg
+                u_envmap: images/refill-spheremap-light.jpg
+                u_contrast: 1.
+                u_zoom_scale: 3.5
+                u_brightness_base: 0.95
+                u_brightness_scaler: 0.75
+            blocks:
+                global: |
+                    // Simplified view-independent environment map
+                    vec4 applyEnvmap (in sampler2D _tex, in vec3 _normal, in float scale) {
+                        _normal.z *= scale;
+                        return texture2D(_tex, .5*(normalize(_normal).xy + 1.));
+                    }
+                color: |
+                    // turn terrain exaggeration up/down
+                    // fade out spheremap normals with a function
+                    float scale1 = 20./(u_map_position.z + 1.0) + 1.5;
+                    float m = u_zoom_scale * (u_map_position.z + 0.4) * exp(u_map_position.z * -.29);
+                    m = clamp(m, 0., 1.5);
+                    color = applyEnvmap(u_envmap, normal, 1./scale1);
+
+                    // apply contrast and brightness
+                    //float contrast = m;
+                    //color.rgb = ((color.rgb - 0.5) * max(contrast, 0.)) + 0.5;
+                    //float brightness = u_brightness_base - m * u_brightness_scaler;
+                    //color.rgb += brightness;
+
+                    // apply layer color
+                    color *= v_color;
+
     dots:
         base: polygons
         mix: texture
@@ -527,6 +868,14 @@ styles:
         shaders:
             uniforms:
                 u_customtexture: images/diagonal-dot.jpg
+                u_scale: 1
+
+    building-dots:
+        base: polygons
+        mix: texture
+        shaders:
+            uniforms:
+                u_customtexture: images/building-dots2.jpg
                 u_scale: 1
 
     water-dots:
@@ -584,6 +933,8 @@ styles:
             uniforms:
                 # two textures to cross-fade between
                 u_textures:
+                    # - images/water-brush4.jpg
+                    # - images/water2.jpg
                     - images/water-brush1.jpg
                     - images/water-brush3.jpg
                 u_zoom_fade: [12.5, 13] # zooms to start/stop cross-fade
@@ -769,8 +1120,10 @@ styles:
                 u_textures:
                     - images/earth-dots2.jpg
                     - images/earth-dots5.jpg
-                    # - images/earth-dots6.jpg
                     # - images/earth-dots5.jpg
+                    # - images/earth-dots6.jpg
+                    # - images/earth-dots8.jpg
+                    # - images/earth-dots9.jpg
                 u_zoom_fade: [12.5, 13] # zooms to start/stop cross-fade
                 u_scale: 1. # number of times to repeat texture in a tile
                 u_light: [-0.5, 0.5, -0.5] # lights are flipped to match sat hillshade
@@ -940,11 +1293,14 @@ styles:
                 # DOTS_DIR: vec3(0.600,-0.950,0.520)
                 DOTS_COLOR: vec3(0.)
                 DOTS_BACKGROUND_COLOR: vec3(1.)
-                DOTS_SCALE: 65.
-                DOTS_SIZE: mix(shade*4.,shade*1.,zoom())
+                DOTS_SCALE: 55.
+                DOTS_SIZE: mix(shade*3.,shade*1.,zoom())
                 # DOTS_SCALE: 35.
                 # DOTS_SIZE: mix(shade*10.,shade*2.,zoom())
             blocks:
+                # normal: |
+                #     float shade = dot((sampleRaster(int(NORMAL_TEXTURE_INDEX)).rgb-.5)*2., DOTS_DIR);
+                #     shade = shade*shade*shade;
                 normal: |
                     float shade = dot(normal, DOTS_DIR);
                     // modify brightness and contrast
@@ -1022,6 +1378,121 @@ styles:
                     #ifdef DOTS_ANIMATE
                     DOTS_ANIMATE;
                     #endif
+
+    highway-dashed:
+        base: lines
+        dash: [1,1]
+        dash_background_color: [1.000,1.000,1.000]
+        shaders:
+            blocks:
+                position: |
+                    v_texcoord.y *= 11.;
+
+    highway-glow:
+        base: lines
+        mix: [lines-glow]
+        shaders:
+            defines:
+                GLOW_WIDTH: 0.45
+                GLOW_BRIGHTNESS: .25
+
+    roads-glow:
+        base: lines
+        mix: [functions-zoom, lines-glow]
+        shaders:
+            defines:
+                ZOOM_START: 5.
+                ZOOM_END: 6.
+                GLOW_WIDTH: mix(1.,.45,zoom())
+                GLOW_BRIGHTNESS: zoom()*.22
+
+    glow-dots:
+        mix: [polygons-dots2]
+        shaders:
+            defines:
+                DOTS_COLOR: vec3(0.000,0.000,0.000)
+                DOTS_GLOW_COLOR: vec3(1.000,1.000,1.000)
+                DOTS_GLOW_SIZE: 2.
+                DOTS_GLOW_AMOUNT: 0.25
+                DOTS_SCALE: 16.
+                DOTS_SIZE: 0.21
+                DOTS_BACKGROUND_COLOR: color.rgb
+                DOTS_TYPE: fill
+                DOTS_TILE_STYLE: brick
+            blocks:
+                color: |
+                    float sdf = circleDF(vec2(0.5)-DOTS_TILE_STYLE(getTileCoords()*DOTS_SCALE,2.));
+
+                    color.rgb = mix(DOTS_BACKGROUND_COLOR,
+                                    DOTS_COLOR,
+                                    DOTS_TYPE( DOTS_SIZE, sdf));
+                    color.rgb += (DOTS_GLOW_COLOR*(1.-sdf*2.))*DOTS_GLOW_AMOUNT;
+
+    polygons-dots2:
+        doc:
+            author: 
+                name: Patricio Gonzalez Vivo
+                twitter: patriciogv
+            version: 0.0.1
+            tangram-version: 0.0.7
+            licence: MIT
+            description: |  
+                Apply dot patterns to a polygon. To learn more about patterns check [this chapter from the Book of Shaders](https://thebookofshaders.com/09/)
+        ui:
+            shaders:
+                defines:
+                    DOTS_SCALE:
+                        type: number
+                        label: Scale
+                        range: 
+                            min: 1.
+                            max: 1000.
+                            step: 1.
+                    DOTS_SIZE:
+                        type: number
+                        label: Size
+                        range: 
+                            min: 0.
+                            max: 1.
+                            step: 0.01
+                    STROKE:
+                        type: number
+                        label: Stroke
+                        default_value: 0.15
+                        range: 
+                            min: 0.
+                            max: 1.
+                            step: 0.01
+                    DOTS_TYPE: 
+                        type: dropdownArray
+                        label: Type
+                        values: ['fill', 'stroke']
+                    DOTS_TILE_STYLE: 
+                        type: dropdownArray
+                        label: 'Tile type'
+                        values: ['tile', 'brick']
+                    DOTS_COLOR: 
+                        type: color
+                        label: Color
+                    DOTS_BACKGROUND_COLOR: 
+                        type: color
+                        label: 'Background color'
+
+        base: polygons
+        mix: [space-tile2, tiling-brick2, tiling-tile2, shapes-circle2]
+        shaders:
+            defines:
+                DOTS_COLOR: color.rgb*.5
+                DOTS_BACKGROUND_COLOR: color.rgb
+                DOTS_SCALE: 10.
+                DOTS_SIZE: 0.41
+                DOTS_TYPE: fill
+                DOTS_TILE_STYLE: brick
+            blocks:
+                color: |
+                    color.rgb = mix(DOTS_BACKGROUND_COLOR, 
+                                    DOTS_COLOR, 
+                                    DOTS_TYPE( DOTS_SIZE, circleDF(vec2(0.5)-DOTS_TILE_STYLE(getTileCoords()*DOTS_SCALE,2.))) );
 
     lines-glow:
         doc:
@@ -1151,6 +1622,32 @@ styles:
                     // Normalize the attribute position of a vertex
                     v_pos = modelPosition().xyz;
 
+    space-tile2:
+        doc:
+            author: 
+                name: Patricio Gonzalez Vivo
+                twitter: patriciogv
+            version: 0.0.1
+            tangram-version: 0.0.7
+            licence: MIT
+            description: |
+                Get the position on the tile
+        shaders:
+            blocks:
+                global: |
+                    // Variant to be add to both vertex and fragments shaders
+                    varying vec3 v_pos;
+                    //
+                    // Get the coordinates in tile space
+                    // ================================
+                    vec2 getTileCoords() {
+                        return fract(v_pos.xy);
+                    }
+
+                position: |
+                    // Normalize the attribute position of a vertex
+                    v_pos = modelPosition().xyz;
+
     tiling-brick:
         doc:
             author:
@@ -1182,6 +1679,35 @@ styles:
                         return fract(st);
                     }
 
+    tiling-brick2:
+        doc:
+            author: 
+                name: Patricio Gonzalez Vivo
+                twitter: patriciogv
+            version: 0.0.1
+            tangram-version: 0.0.7
+            licence: MIT
+            description: |
+                Repeats a coordinate space (`vec2 st`) in diferent brick-like tiles N times (`float zoom`). For more information about tilling patterns read [this chapter of The Book of Shaders](https://thebookofshaders.com/09/)
+            examples:
+                nursery:
+                    url: https://tangrams.github.io/tangram-sandbox/styles/nursery.yaml
+                    img: https://tangrams.github.io/tangram-sandbox/styles/nursery.png
+                    lines: 99 
+                patterns:
+                    url: https://tangrams.github.io/tangram-sandbox/styles/patterns.yaml
+                    img: https://tangrams.github.io/tangram-sandbox/styles/patterns.png
+                    lines: 130
+        shaders:
+            blocks:
+                global: |
+                    vec2 brick (vec2 st, float zoom) {
+                        st *= zoom;
+                        // Here is where the offset is happening
+                        st.x += step(1., mod(st.y,2.0)) * 0.5;
+                        return fract(st);
+                    }
+
     tiling-tile:
         doc:
             author:
@@ -1194,6 +1720,26 @@ styles:
                 Repeats a coordinate space (`vec2 st`) in diferent brick-like tiles N times (`float zoom`). For more information about tilling patterns read [this chapter of The Book of Shaders](https://thebookofshaders.com/09/)
         test:
             tile: { blocks: { color: "    color.rg += tile(v_texcoord.xy,5.);" } }
+        shaders:
+            blocks:
+                global: |
+                    // Repeats a coordinate space (st) in diferent tiles
+                    // ================================
+                    vec2 tile (vec2 st, float zoom) {
+                        st *= zoom;
+                        return fract(st);
+                    }
+
+    tiling-tile2:
+        doc:
+            author: 
+                name: Patricio Gonzalez Vivo
+                twitter: patriciogv
+            version: 0.0.1
+            tangram-version: 0.0.7
+            licence: MIT
+            description: |
+                Repeats a coordinate space (`vec2 st`) in diferent brick-like tiles N times (`float zoom`). For more information about tilling patterns read [this chapter of The Book of Shaders](https://thebookofshaders.com/09/)
         shaders:
             blocks:
                 global: |
@@ -1458,6 +2004,52 @@ styles:
                     // ================================
                     float circle (vec2 st, float radius) {
                         return 1.-aastep(radius, circleDF(st-vec2(0.5))*PI);
+                    }
+
+    shapes-circle2:
+        doc:
+            author: 
+                name: Patricio Gonzalez Vivo
+                twitter: patriciogv
+            version: 0.0.1
+            tangram-version: 0.0.7
+            licence: MIT
+            description: |  
+                Collection of functions to draw circles. To learn more about how to make shapes on shaders go to From check [this chapter about shapes from the Book of Shaders](https://thebookofshaders.com/07/)
+            examples:
+                lego:
+                    url: https://tangrams.github.io/tangram-sandbox/styles/lego.yaml
+                    img: https://tangrams.github.io/tangram-sandbox/styles/lego.png
+                    lines: 109-110
+                patterns:
+                    url: https://tangrams.github.io/tangram-sandbox/styles/patterns.yaml
+                    img: https://tangrams.github.io/tangram-sandbox/styles/patterns.png
+                    lines: 146
+                nursery:
+                    url: https://tangrams.github.io/tangram-sandbox/styles/nursery.yaml
+                    img: https://tangrams.github.io/tangram-sandbox/styles/nursery.png
+                    lines: 146
+        mix: [shapes-type]
+        shaders:
+            blocks:
+                global: |
+                    // get distance field of a Circle
+                    // ================================
+                    float circleDF (vec2 st) {
+                        return dot(st,st)*3.03;
+                    }
+                    //
+                    // Draw a circle in the middle of the ST space
+                    // ================================
+                    float circle (vec2 st, float radius) {
+                        return fill(radius, circleDF(st-vec2(0.5)));
+                    }
+
+                    //
+                    // Draw a circle in the middle of the ST space
+                    // ================================
+                    float circleBorder (vec2 st, float radius) {
+                        return stroke(radius, circleDF(st-vec2(0.5)));
                     }
 
     block:
