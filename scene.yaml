@@ -100,14 +100,125 @@ layers:
                 order: global.feature_order
                 color: [1.000,1.000,1.000]
 
+    # water:
+    #     data: { source: nextzen, layer: water }
+    #     draw:
+    #         polygons:
+    #             style: water-dots
+    #             # style: texture-zooms
+    #             color: [0.000,0.000,0.000]
+    #             order: global.feature_order
+
     water:
         data: { source: nextzen, layer: water }
         draw:
             polygons:
                 style: water-dots
-                # style: texture-zooms
-                color: [0.000,0.000,0.000]
                 order: global.feature_order
+                color: [0.000,0.000,0.000]
+
+        lakes:
+            filter:
+                all:
+                    - kind: [ocean, lake, water, riverbank, reservoir, swimming_pool]
+                # WARNING: any area filters here must match the area filters in the water-boundaries-not_ocean layer
+                any:
+                    # limit show smaller landuse areas to higher zooms
+                    - { $zoom: { min: 1 },  area: { min: 40000000000 } }
+                    - { $zoom: { min: 2 },  area: { min: 20000000000 } }
+                    # some weird natural earth scale set transition
+                    - { $zoom: { min: 3 },  area: { min: 80000000000 } }
+                    - { $zoom: { min: 4 },  area: { min: 5000000000 } }
+                    - { $zoom: { min: 5 },  area: { min: 700000000 } }
+                    - { $zoom: { min: 6 },  area: { min: 500000000 } }
+                    - { $zoom: { min: 7 },  area: { min: 160000000 } }
+                    - { $zoom: { min: 8 },  area: { min: 40000000 } }
+                    - { $zoom: { min: 9 },  area: { min: 10000000 } }
+                    - { $zoom: { min: 10 }, area: { min: 8000000 } }
+                    - { $zoom: { min: 11 }, area: { min: 2000000 } }
+                    - { $zoom: { min: 12 }, area: { min: 200000 } }
+                    - { $zoom: { min: 13 }, area: { min: 100000 } }
+                    - { $zoom: { min: 14 }, area: { min: 2000 } }
+                    - { $zoom: { min: 15 } }
+            draw:
+                polygons:
+                    style: water-dots
+
+        other_areas:
+            filter: { not: { kind: [ocean, lake, water, reservoir] }, $zoom: { min: 10 }, area: { min: 100 } }
+            draw:
+                polygons:
+                    style: water-dots
+
+        playas:
+            filter: { kind: playa, $zoom: { min: 4 } }
+            draw:
+                polygons:
+                    style: polygons
+                    order: global.feature_order
+                    color: [0.500,0.500,0.500]
+
+        boundaries:
+            filter: { boundary: true, kind: ocean }
+            # don't animate early, save the fan, save the planet!
+            early:
+                filter: { $zoom: { max: 16 } }
+                draw:
+                    lines:
+                        style: coastline-glow
+                        order: global.feature_order
+                        width: [[4,0px],[11,2.5px],[14,6px],[16,10px]]
+                        color: [0.600,0.600,0.600]
+                        join: round
+            animated:
+                filter: { $zoom: { min: 16 } }
+                draw:
+                    lines:
+                        style: water-boundaries-animated
+                        order: global.feature_order
+                        width: [[16,21px],[18,30px],[20,36]]
+                        color: [0.600,0.600,0.600]
+                        join: round
+
+        boundaries-not_ocean:
+            filter:
+                all:
+                    - boundary: true
+                    - not: { kind: [ocean, playa] }
+                    - $zoom: { min: 8 }
+                # WARNING: any area filters here must match the area filters in the lakes layer
+                any:
+                    # limit show smaller landuse areas to higher zooms
+                    - { $zoom: { min: 1 },  area: { min: 40000000000 } }
+                    - { $zoom: { min: 2 },  area: { min: 20000000000 } }
+                    # some weird natural earth scale set transition
+                    - { $zoom: { min: 3 },  area: { min: 80000000000 } }
+                    - { $zoom: { min: 4 },  area: { min: 5000000000 } }
+                    - { $zoom: { min: 5 },  area: { min: 700000000 } }
+                    - { $zoom: { min: 6 },  area: { min: 500000000 } }
+                    - { $zoom: { min: 7 },  area: { min: 160000000 } }
+                    - { $zoom: { min: 8 },  area: { min: 40000000 } }
+                    - { $zoom: { min: 9 },  area: { min: 10000000 } }
+                    - { $zoom: { min: 10 }, area: { min: 8000000 } }
+                    - { $zoom: { min: 11 }, area: { min: 2000000 } }
+                    - { $zoom: { min: 12 }, area: { min: 200000 } }
+                    - { $zoom: { min: 13 }, area: { min: 100000 } }
+                    - { $zoom: { min: 14 }, area: { min: 2000 } }
+                    - { $zoom: { min: 15 } }
+            draw:
+                lines:
+                    order: global.feature_order
+                    color: [1.000,1.000,1.000]
+                    width: [[8,0px],[13,1px],[15,1.25px],[20,3px]]
+                    join: round
+
+            boundaries-not_ocean-riverbank:
+                # river boundaries like the thames in london, la seine in paris
+                filter: { kind: riverbank }
+                draw:
+                    lines:
+                        color: [1.000,1.000,1.000]
+                        width: [[8,0px],[13,1px],[15,1.25px],[20,8px]]
 
     roads:
         data: { source: nextzen, layer: roads }
@@ -803,6 +914,45 @@ layers:
                     width: 1px
 
 styles:
+    water-boundaries-animated:
+        base: lines
+        mix: [lines-coast]
+        shaders:
+            defines:
+                COAST_WAVES_ANIMATED: true
+
+    lines-coast:
+        base: lines
+        animated: true
+        texcoords: true
+        blend: add
+        shaders:
+            defines:
+                COAST_WAVES_AMOUNT: 5.
+                COAST_WAVES_SPEED: 0.1
+                COAST_WAVES_ANIMATED: true
+            blocks:
+                color: |
+                    float pct = 0.0;
+                    // glow
+                    pct = smoothstep(0.,2.,1.-v_texcoord.x);
+                    // waves
+                    #ifdef COAST_WAVES_ANIMATED
+                    pct += (1.-fract(v_texcoord.x*COAST_WAVES_AMOUNT+(fract(u_time*COAST_WAVES_SPEED))))*pct;
+                    #else
+                    pct += (1.-fract(v_texcoord.x*COAST_WAVES_AMOUNT))*pct;
+                    #endif
+
+                    color *= pct;
+
+    coastline-glow:
+        base: lines
+        mix: [lines-glow]
+        shaders:
+            defines:
+                GLOW_WIDTH: .5
+                GLOW_BRIGHTNESS: .5
+
     no-texture:
         base: polygons
 
