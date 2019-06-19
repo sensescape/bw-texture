@@ -154,7 +154,7 @@ layers:
             filter: { kind: playa, $zoom: { min: 4 } }
             draw:
                 polygons:
-                    style: polygons
+                    style: earth-dots2
                     order: global.feature_order
                     color: [0.500,0.500,0.500]
 
