@@ -1178,7 +1178,7 @@ styles:
                 # two textures to cross-fade between
                 u_textures:
                     - images/park-dots1.jpg
-                    - images/park.jpg
+                    - images/park-dots3.jpg
                 u_zoom_fade: [12.5, 13] # zooms to start/stop cross-fade
                 u_scale: 1. # number of times to repeat texture in a tile
                 u_light: [-0.5, 0.5, -0.5] # lights are flipped to match sat hillshade
