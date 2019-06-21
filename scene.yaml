@@ -953,6 +953,18 @@ layers:
                     visible: true
                     width: 1px
 
+        in_university:
+            filter:
+                landuse_kind: [university, college]
+            draw:
+                polygons:
+                    visible: true
+                    style: polygons-transparent
+                    color: [1.000,1.000,1.000,0.5]
+                lines:
+                    visible: true
+                    width: 1px
+
 styles:
     water-boundaries-animated:
         base: lines
@@ -1041,7 +1053,7 @@ styles:
         shaders:
             blocks:
                 filter: |
-                    color.rgb = mix(vec3(1.000), vec3(0.100,0.100,0.100), gl_FragCoord.x / u_resolution.x); // 50% mix of white and green
+                    color.rgb = mix(vec3(1.000), vec3(0.050,0.050,0.050), gl_FragCoord.x / u_resolution.x); // 50% mix of white and green
 
     gradient2:
         base: polygons
