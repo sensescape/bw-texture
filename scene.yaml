@@ -881,6 +881,15 @@ layers:
                         color: [0.900,0.900,0.900]
                         visible: true
 
+        university:
+            filter:
+                kind: [university, college]
+            draw:
+                polygons:
+                    style: gradient2
+                    color: [1.000,1.000,1.000]
+                    visible: true
+
     buildings:
         data: { source: nextzen, layer: buildings }
         filter:
@@ -1026,6 +1035,20 @@ styles:
 
                     // apply layer color
                     color *= v_color;
+
+    gradient1:
+        base: polygons
+        shaders:
+            blocks:
+                filter: |
+                    color.rgb = mix(vec3(1.000), vec3(0.100,0.100,0.100), gl_FragCoord.x / u_resolution.x); // 50% mix of white and green
+
+    gradient2:
+        base: polygons
+        shaders:
+            blocks:
+                filter: |
+                    color.rgb = vec3(abs(sin(gl_FragCoord.x / u_resolution.x)+0.28), abs(sin(gl_FragCoord.x / u_resolution.x)+0.28), abs(sin(gl_FragCoord.x / u_resolution.x)+0.28));
 
     dots:
         base: polygons
