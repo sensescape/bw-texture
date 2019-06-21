@@ -886,8 +886,8 @@ layers:
                 kind: [university, college]
             draw:
                 polygons:
-                    style: gradient2
-                    color: [1.000,1.000,1.000]
+                    style: gradient1
+                    color: [0.900,0.900,0.900]
                     visible: true
 
     buildings:
