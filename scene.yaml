@@ -883,7 +883,9 @@ layers:
 
         university:
             filter:
-                kind: [university, college]
+                all:
+                    - kind: [university, college]
+                    - $zoom: { min: 13 }
             draw:
                 polygons:
                     style: gradient1
