@@ -823,8 +823,9 @@ layers:
             draw:
                 polygons:
                     # style: forest
-                    style: texture-terrain-park
-                    color: [0.300,0.300,0.300]
+                    # style: texture-terrain-park
+                    style: dash-terrain-landuse
+                    color: [0.000,0.000,0.000]
                     visible: true
 
         forest-landcover:
@@ -885,7 +886,7 @@ layers:
             filter:
                 all:
                     - kind: [university, college]
-                    - $zoom: { min: 13 }
+                    - $zoom: { min: 14 }
             draw:
                 polygons:
                     style: gradient1
@@ -1017,10 +1018,10 @@ styles:
     terrain:
         base: polygons
         lighting: false
-        raster: normal
+        # raster: normal
+        raster: custom
         shaders:
             uniforms:
-                # u_envmap: images/sphere-map2.jpg
                 u_envmap: images/refill-spheremap-light.jpg
                 u_contrast: 1.
                 u_zoom_scale: 3.5
@@ -1033,22 +1034,25 @@ styles:
                         _normal.z *= scale;
                         return texture2D(_tex, .5*(normalize(_normal).xy + 1.));
                     }
+                normal: |
+                    // get the normal from the normal map, to apply terrain shading
+                    normal = normalize(sampleRaster(0).xyz * 2. - 1.);
                 color: |
                     // turn terrain exaggeration up/down
                     // fade out spheremap normals with a function
                     float scale1 = 20./(u_map_position.z + 1.0) + 1.5;
-                    float m = u_zoom_scale * (u_map_position.z + 0.4) * exp(u_map_position.z * -.29);
-                    m = clamp(m, 0., 1.5);
-                    color = applyEnvmap(u_envmap, normal, 1./scale1);
+                    color *= applyEnvmap(u_envmap, normal, 1./scale1);
 
                     // apply contrast and brightness
-                    //float contrast = m;
-                    //color.rgb = ((color.rgb - 0.5) * max(contrast, 0.)) + 0.5;
-                    //float brightness = u_brightness_base - m * u_brightness_scaler;
-                    //color.rgb += brightness;
+                    float m = u_zoom_scale * (u_map_position.z + 0.4) * exp(u_map_position.z * -.29);
+                    m = clamp(m, 0., 1.5);
 
-                    // apply layer color
-                    color *= v_color;
+                    float contrast = m;
+                    contrast = 1.;
+                    float brightness = u_brightness_base - m * u_brightness_scaler;
+
+                    // color.rgb = ((color.rgb - 0.5) * max(contrast, 0.)) + 0.5;
+                    // color.rgb += brightness;
 
     gradient1:
         base: polygons
@@ -1623,6 +1627,128 @@ styles:
                 ZOOM_END: 6.
                 GLOW_WIDTH: mix(1.,.45,zoom())
                 GLOW_BRIGHTNESS: zoom()*.22
+
+    dash-terrain-landuse:
+        base: polygons
+        mix: [functions-zoom, elevation-dash]
+        shaders:
+            defines:
+                ZOOM_START: 14.
+                ZOOM_END: 18.
+                ZOOM_IN: .0
+                ZOOM_OUT: 1.
+
+                DASH_COLOR: vec3(1.000,1.000,1.000)
+                DASH_BACKGROUND_COLOR: vec3(0.000,0.000,0.000)
+                DASH_SCALE: 21.
+                DASH_TYPE: fill
+                DASH_TILE_STYLE: brick
+                DASH_DIR: vec3(-0.600,-0.420,0.560)
+                NORMAL_TEXTURE_INDEX: 0
+                DASH_MIN_SIZE: .02
+                DASH_MAX_SIZE: 1.
+                DASH_SIZE: shade
+
+    elevation-dash:
+        doc:
+            author:
+                name: Patricio Gonzalez Vivo
+                twitter: patriciogv
+            version: 0.0.1
+            tangram-version: 0.0.7
+            licence: MIT
+            description: |
+                Perfect for the `landuse` layer on your elevation maps, the `elevation-dash` modules use the color of the layer to draw a dash pattern that changes width based on the surface of the terrain.
+        base: polygons
+        mix: [ polygons-diagonal-dash, terrain]
+        # lighting: false
+        # raster: normal
+        raster: custom
+        shaders:
+            defines:
+                DASH_COLOR: color.rgb*.5
+                DASH_BACKGROUND_COLOR: color.rgb
+                DASH_SCALE: 10.
+                DASH_SIZE: 0.9
+                DASH_TYPE: fill
+                DASH_TILE_STYLE: brick
+                DASH_DIR: vec3(-0.600,-0.420,0.560)
+                NORMAL_TEXTURE_INDEX: 0
+                DASH_MIN_SIZE: .7
+                DASH_MAX_SIZE: 1.
+                DASH_SIZE: shade
+            blocks:
+                normal: |
+                    float shade = dot((sampleRaster(int(NORMAL_TEXTURE_INDEX)).rgb-.5)*2., DASH_DIR);
+                    shade = mix(DASH_MIN_SIZE, DASH_MAX_SIZE, (shade*shade*shade)*4.);
+
+    polygons-diagonal-dash:
+        doc:
+            author:
+                name: Patricio Gonzalez Vivo
+                twitter: patriciogv
+            version: 0.0.1
+            tangram-version: 0.0.7
+            licence: MIT
+            description: |
+                Apply a diagonal dash pattern to the polygon style. To learn more about patterns check [this chapter from the Book of Shaders](https://thebookofshaders.com/09/)
+        ui:
+            shaders:
+                defines:
+                    DASH_SCALE:
+                        type: number
+                        label: Scale
+                        range:
+                            min: 1.
+                            max: 1000.
+                            step: 1.
+                    DASH_SIZE:
+                        type: number
+                        label: Alpha
+                        range:
+                            min: 0.
+                            max: 1.
+                            step: 0.01
+                    STRIPES_ALPHA:
+                        type: number
+                        label: Alpha
+                        range:
+                            min: 0.
+                            max: 1.
+                            step: 0.01
+                    DASH_COLOR:
+                        type: color
+                        label: Color
+                    DASH_BACKGROUND_COLOR:
+                        type: color
+                        label: 'Background color'
+                    DASH_TYPE:
+                        type: dropdownArray
+                        label: Type
+                        values: ['fill', 'stroke']
+                    DASH_TILE_STYLE:
+                        type: dropdownArray
+                        label: 'Tile type'
+                        values: ['tile', 'brick']
+        base: polygons
+        mix: [block, space-tile, tiling-brick, tiling-tile, shapes-type]
+        shaders:
+            defines:
+                DASH_COLOR: color.rgb*.5
+                DASH_BACKGROUND_COLOR: color.rgb
+                DASH_SCALE: 10.
+                DASH_SIZE: 0.9
+                DASH_TYPE: fill
+                DASH_TILE_STYLE: tile
+            blocks:
+                global: |
+                    float dashDF(vec2 st) {
+                        return min(cos((st.x-st.y)*PI),-cos((st.x+st.y+.5)*PI*.6666)*5.);
+                    }
+                color: |
+                    color.rgb = mix(DASH_BACKGROUND_COLOR,
+                                    DASH_COLOR,
+                                    DASH_TYPE( DASH_SIZE, dashDF(DASH_TILE_STYLE(getTileCoords()*DASH_SCALE,3.))) );
 
     glow-dots:
         mix: [polygons-dots2]
