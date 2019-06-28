@@ -51,10 +51,29 @@
 
         tangramLayer.addTo(map);
 
-        // map.setView([37.7795, -122.3680], 12); // San Francisco
-        // map.setView([42.3638, -71.0418], 14); // Boston
-        // map.setView([38.1726, -119.4569], 9); // Test Terrain
-        map.setView([22.2639, -245.8146], 13); // Hong Kong
+        // from refill-style
+        // location
+        var url_hash = window.location.hash.slice(1).split('/'); // map location as #z/x/y
+        var map_start_location = [22.2639, -245.8146, 13]; // Hong Kong
+        var defaultpos = true; // use default position
+        
+        // location is passed through url
+        if (url_hash.length == 3) {
+            var defaultpos = false;
+            if (url_hash[1] > 180) { // parse hash as tile coordinates
+                // example: http://localhost:9001/#15/5242/12663
+                // add .5 to coords to center tile on screen
+                map_start_location = [tile2lat(parseFloat(url_hash[2]) + .5, url_hash[0]), tile2long(parseFloat(url_hash[1]) + .5, url_hash[0]), url_hash[0]];
+            }
+            else { // parse hash as lat/lng coordinates
+                map_start_location = [url_hash[1],url_hash[2], url_hash[0]];
+                // convert from strings
+                map_start_location = map_start_location.map(Number);
+            }
+        }
+        
+        map.setView(map_start_location.slice(0, 2), map_start_location[2]);
+
 
 
     </script>
