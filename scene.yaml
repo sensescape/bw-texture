@@ -81,7 +81,7 @@ sources:
     #     tile_size: 512
     #     max_zoom: 16
 
-    nextzen:
+    mapzen:
         type: MVT
         url: https://tile.nextzen.org/tilezen/vector/v1/512/all/{z}/{x}/{y}.mvt
         url_params:
@@ -103,7 +103,7 @@ sources:
 
 layers:
     earth:
-        data: { source: nextzen, layer: earth }
+        data: { source: mapzen, layer: earth }
         draw:
             polygons:
                 # style: dots
@@ -114,7 +114,7 @@ layers:
                 color: [1.000,1.000,1.000]
 
     # water:
-    #     data: { source: nextzen, layer: water }
+    #     data: { source: mapzen, layer: water }
     #     draw:
     #         polygons:
     #             style: water-dots
@@ -123,7 +123,7 @@ layers:
     #             order: global.feature_order
 
     water:
-        data: { source: nextzen, layer: water }
+        data: { source: mapzen, layer: water }
         draw:
             polygons:
                 style: water-dots
@@ -234,7 +234,7 @@ layers:
                         width: [[8,0px],[13,1px],[15,1.25px],[20,8px]]
 
     roads:
-        data: { source: nextzen, layer: roads }
+        data: { source: mapzen, layer: roads }
         draw:
             lines:
                 width: 1px
@@ -771,7 +771,7 @@ layers:
                             width: [[12,2px],[15,8px],[20,24px]]
 
     landuse:
-        data: { source: nextzen }
+        data: { source: mapzen }
         draw:
             polygons:
                 order: global.feature_order
@@ -894,7 +894,7 @@ layers:
                     visible: true
 
     buildings:
-        data: { source: nextzen, layer: buildings }
+        data: { source: mapzen, layer: buildings }
         filter:
             not: { location: underground }
         draw:
@@ -1669,7 +1669,6 @@ styles:
                 DASH_COLOR: color.rgb*.5
                 DASH_BACKGROUND_COLOR: color.rgb
                 DASH_SCALE: 10.
-                DASH_SIZE: 0.9
                 DASH_TYPE: fill
                 DASH_TILE_STYLE: brick
                 DASH_DIR: vec3(-0.600,-0.420,0.560)
@@ -1680,7 +1679,7 @@ styles:
             blocks:
                 normal: |
                     float shade = dot((sampleRaster(int(NORMAL_TEXTURE_INDEX)).rgb-.5)*2., DASH_DIR);
-                    shade = mix(DASH_MIN_SIZE, DASH_MAX_SIZE, (shade*shade*shade)*4.);
+                    shade = mix(DASH_MIN_SIZE, DASH_MAX_SIZE, (shade*shade*shade)*5.);
 
     polygons-diagonal-dash:
         doc:
