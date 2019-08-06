@@ -1161,7 +1161,9 @@ styles:
                     - images/water-brush3.jpg
                 u_zoom_fade: [12.5, 13] # zooms to start/stop cross-fade
                 u_scale: 1. # number of times to repeat texture in a tile
-                u_light: [-0.5, 0.5, -0.5] # lights are flipped to match sat hillshade
+                # u_light: [-0.5, 0.5, -0.5] # lights are flipped to match sat hillshade
+                # u_light: [0.000, -0.320, -0.725] # lights are flipped to match sat hillshade
+                u_light: [-0.375, 0.000, -0.530] # lights are flipped to match sat hillshade
                 u_ambient: 0.5
             blocks:
                 position: |
@@ -1222,7 +1224,9 @@ styles:
                     - images/park-dots3.jpg
                 u_zoom_fade: [12.5, 13] # zooms to start/stop cross-fade
                 u_scale: 1. # number of times to repeat texture in a tile
-                u_light: [-0.5, 0.5, -0.5] # lights are flipped to match sat hillshade
+                # u_light: [-0.5, 0.5, -0.5] # lights are flipped to match sat hillshade
+                # u_light: [0.000, -0.320, -0.725] # lights are flipped to match sat hillshade
+                u_light: [-0.375, 0.000, -0.530] # lights are flipped to match sat hillshade
                 u_ambient: 0.5
             blocks:
                 position: |
@@ -1263,7 +1267,7 @@ styles:
                     float feather =
                         TANGRAM_EPSILON; // hard edge
                         // 0.025; // in between
-                        // 0.05; // soft edge
+                        //0.05; // soft edge
 
                     color.rgb = mix(
                         TileTexture(u_textures[0],u_scale).rgb,
@@ -1283,7 +1287,9 @@ styles:
                     - images/forest1.jpg
                 u_zoom_fade: [12.5, 13] # zooms to start/stop cross-fade
                 u_scale: 1. # number of times to repeat texture in a tile
-                u_light: [-0.5, 0.5, -0.5] # lights are flipped to match sat hillshade
+                # u_light: [-0.5, 0.5, -0.5] # lights are flipped to match sat hillshade
+                # u_light: [0.000, -0.320, -0.725] # lights are flipped to match sat hillshade
+                u_light: [-0.375, 0.000, -0.530] # lights are flipped to match sat hillshade
                 u_ambient: 0.5
             blocks:
                 position: |
@@ -1348,7 +1354,9 @@ styles:
                     # - images/earth-dots9.jpg
                 u_zoom_fade: [12.5, 13] # zooms to start/stop cross-fade
                 u_scale: 1. # number of times to repeat texture in a tile
-                u_light: [-0.5, 0.5, -0.5] # lights are flipped to match sat hillshade
+                # u_light: [-0.5, 0.5, -0.5] # lights are flipped to match sat hillshade
+                # u_light: [0.000, -0.320, -0.725] # lights are flipped to match sat hillshade
+                u_light: [-0.375, 0.000, -0.530] # lights are flipped to match sat hillshade
                 u_ambient: 0.5
             blocks:
                 position: |
