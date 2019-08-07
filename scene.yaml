@@ -890,7 +890,8 @@ layers:
                 polygons:
                     # style: landuse-test
                     # style: terrain-dots
-                    style: texture-terrain-earth
+                    # style: texture-terrain-earth
+                    style: texture-zooms-multi
                     color: [0.000,0.000,0.000]
                     visible: true
 
@@ -1426,6 +1427,68 @@ styles:
                         // 1.-step(dz, u_edge) // hard edge
                         smoothstep(edge - feather, edge + feather, dz)
                     );
+
+    texture-zooms-multi:
+        base: polygons
+        shaders:
+            defines:
+                # MUST match number of entries in u_zoom_stops below
+                NUM_TEXTURE_STOPS: 3
+            uniforms:
+                u_zoom_stops: [12, 14, 17] # zooms to start/stop cross-fade
+                u_textures:
+                    - images/dots2.jpg
+                    - images/earth-dots4.jpg
+                    - images/park-dots1.jpg
+                    - images/park.jpg
+                    # - red
+                    # - blue
+                    # - yellow
+                    # - purple
+                u_zoom_fade_range: 0.5 # how quickly the zoom cross-fade happens
+                u_scale: 1. # number of times to repeat texture in a tile
+            blocks:
+                position: |
+                    // make tile worldspace coordinates available to the global block
+                    v_pos = modelPosition();
+                global: |
+                    varying vec4 v_pos;
+                    vec4 TileTexture(sampler2D tex, float scale) {
+                        // CONTROLS
+                        // how smooth should the transition be?
+                        // 0 = snapping, 1 = continuous smoothstep crossfade
+                        float smoothness = .75;
+                        vec2 IN = v_pos.xy * scale * exp2(floor(u_map_position.z)-u_tile_origin.z);
+                        vec2 OUT = v_pos.xy * scale * exp2(floor(u_map_position.z)-u_tile_origin.z + 1.);
+                        vec4 intex = texture2D(tex,fract(IN));
+                        vec4 outtex = texture2D(tex,fract(OUT));
+                        float texf;
+                        //// linear transition
+                        // texf = fract(u_map_position.z);
+                        //// use smoothstep instead
+                        float tx = (1. - smoothness) * .5;
+                        texf = smoothstep(tx, 1.-tx, fract(u_map_position.z));
+                        return mix(intex, outtex, texf);
+                    }
+
+                    vec3 blendTextureSet(float z) {
+                        const int numTextureStops = int(NUM_TEXTURE_STOPS);
+                        vec3 iTex = TileTexture(u_textures[numTextureStops], u_scale).rgb;
+                        vec3 jTex = TileTexture(u_textures[numTextureStops], u_scale).rgb;
+                        float textureFade = 1.;
+
+                        for (int a=0; a < numTextureStops; a++) {
+                            if (z < u_zoom_stops[a]) {
+                                iTex = TileTexture(u_textures[a], u_scale).rgb;
+                                jTex = TileTexture(u_textures[a+1], u_scale).rgb;
+                                textureFade = 1. - clamp(u_zoom_stops[a] - z, 0., u_zoom_fade_range) / u_zoom_fade_range;
+                                break;
+                            }
+                        }
+                        return mix(iTex, jTex, textureFade);
+                    }
+                color: |
+                    color.rgb = blendTextureSet(u_map_position.z);
 
     texture-terrain-zooms:
         base: polygons
