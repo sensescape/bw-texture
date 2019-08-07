@@ -66,6 +66,26 @@ textures:
     palette:
         url: images/ramp.png
 
+    red:
+        width: 1
+        height: 1
+        data: [255, 0, 0, 255]
+
+    blue:
+        width: 1
+        height: 1
+        data: [0, 0, 255, 255]
+
+    yellow:
+        width: 1
+        height: 1
+        data: [255, 255, 0, 255]
+
+    purple:
+        width: 1
+        height: 1
+        data: [255, 0, 255, 255]
+
 
 scene:
     background:
@@ -849,7 +869,8 @@ layers:
             draw:
                 polygons:
                     # style: terrain-dots
-                    style: texture-terrain-park
+                    # style: texture-terrain-park
+                    style: texture-terrain-zooms
                     color: [0.300,0.300,0.300]
                     visible: true
             national_park:
@@ -1404,6 +1425,111 @@ styles:
                         TileTexture(u_textures[1],u_scale).rgb,
                         // 1.-step(dz, u_edge) // hard edge
                         smoothstep(edge - feather, edge + feather, dz)
+                    );
+
+    texture-terrain-zooms:
+        base: polygons
+        raster: custom
+        shaders:
+            uniforms:
+                # textures to fade between
+                u_texturesA:
+                    - images/dots2.jpg
+                    - images/park-dots1.jpg
+                    - images/park.jpg
+                u_texturesB:
+                    - images/diagonal-dot2.jpg
+                    - images/park-dots3.jpg
+                    - images/forest1.jpg
+                u_zoom_fade: [14, 17] # zooms to start/stop cross-fade
+                u_zoom_fade_range: 0.7 # how quickly the zoom cross-fade happens
+
+                u_scale: 1. # number of times to repeat texture in a tile
+                u_light: [-0.5, 0.5, -0.5] # lights are flipped to match sat hillshade
+                u_ambient: 0.5
+            blocks:
+                position: |
+                    // make tile worldspace coordinates available to the global block
+                    v_pos = modelPosition();
+                global: |
+                    varying vec4 v_pos;
+                    vec4 TileTexture(sampler2D tex, float scale) {
+                        // CONTROLS
+                        // how smooth should the transition be?
+                        // 0 = snapping, 1 = continuous smoothstep crossfade
+                        float smoothness = .75;
+                        vec2 IN = v_pos.xy * scale * exp2(floor(u_map_position.z)-u_tile_origin.z);
+                        vec2 OUT = v_pos.xy * scale * exp2(floor(u_map_position.z)-u_tile_origin.z + 1.);
+                        vec4 intex = texture2D(tex,fract(IN));
+                        vec4 outtex = texture2D(tex,fract(OUT));
+                        float texf;
+                        // linear transition
+                        // texf = fract(u_map_position.z);
+                        // use smoothstep instead
+                        float tx = (1. - smoothness) * .5;
+                        texf = smoothstep(tx, 1.-tx, fract(u_map_position.z));
+                        return mix(intex, outtex, texf);
+                    }
+
+                color: |
+                    // simple directional light with Lambert shading
+                    vec3 terrain = normalize(sampleRaster(0).xyz *2. - 1.4); // terrain surface normal
+                    float diffuse = clamp(dot(terrain, normalize(-u_light)), 0., 1.);
+                    float maskBlend = clamp((u_ambient) + (diffuse), 0., 1.);
+
+                    // brightness at which terrain texture fade starts
+                    float edge = 0.85;
+
+                    // controls terrain texture fade transition
+                    float feather =
+                        TANGRAM_EPSILON; // hard edge
+                        // 0.025; // in between
+                        // 0.05; // soft edge
+
+                    vec3 textureASample, textureBSample;
+                    float textureFade;
+
+                    if (u_map_position.z < u_zoom_fade[0]) {
+                        const int i = 0, j = 1;
+
+                        textureFade = 1. - clamp(u_zoom_fade[i] - u_map_position.z, 0., u_zoom_fade_range) / u_zoom_fade_range;
+
+                        textureASample = mix(
+                            TileTexture(u_texturesA[i], u_scale).rgb,
+                            TileTexture(u_texturesA[j], u_scale).rgb,
+                            textureFade);
+
+                        textureBSample = mix(
+                            TileTexture(u_texturesB[i], u_scale).rgb,
+                            TileTexture(u_texturesB[j], u_scale).rgb,
+                            textureFade);
+                    }
+                    else if (u_map_position.z < u_zoom_fade[1]) {
+                        const int i = 1, j = 2;
+
+                        textureFade = 1. - clamp(u_zoom_fade[i] - u_map_position.z, 0., u_zoom_fade_range) / u_zoom_fade_range;
+
+                        textureASample = mix(
+                            TileTexture(u_texturesA[i], u_scale).rgb,
+                            TileTexture(u_texturesA[j], u_scale).rgb,
+                            textureFade);
+
+                        textureBSample = mix(
+                            TileTexture(u_texturesB[i], u_scale).rgb,
+                            TileTexture(u_texturesB[j], u_scale).rgb,
+                            textureFade);
+                    }
+                    else {
+                        const int i = 2;
+
+                        textureASample = TileTexture(u_texturesA[i], u_scale).rgb;
+                        textureBSample = TileTexture(u_texturesB[i], u_scale).rgb;
+                    }
+
+                    color.rgb = mix(
+                        textureASample,
+                        textureBSample,
+                        smoothstep(edge - feather, edge + feather, maskBlend)
                     );
 
     textured-lines:
