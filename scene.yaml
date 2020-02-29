@@ -129,18 +129,9 @@ layers:
                 # style: dots
                 style: texture-terrain-earth
                 # style: texture-zooms2
-                # style: terrain
+                # style: earth-dots2
                 order: global.feature_order
                 color: [1.000,1.000,1.000]
-
-    # water:
-    #     data: { source: mapzen, layer: water }
-    #     draw:
-    #         polygons:
-    #             style: water-dots
-    #             # style: texture-zooms
-    #             color: [0.000,0.000,0.000]
-    #             order: global.feature_order
 
     water:
         data: { source: mapzen, layer: water }
@@ -255,6 +246,7 @@ layers:
 
     roads:
         data: { source: mapzen, layer: roads }
+        enabled: true
         draw:
             lines:
                 width: 1px
@@ -792,6 +784,7 @@ layers:
 
     landuse:
         data: { source: mapzen }
+        enabled: true
         draw:
             polygons:
                 order: global.feature_order
@@ -822,40 +815,40 @@ layers:
                         visible: true
 
 
-        conservation:
-            filter:
-                $zoom: { min: 4 }
-                kind: [protected_area, nature_reserve, national_park]
-                not: { protect_class: ['2','3','5']}
-            draw:
-                polygons:
-                    style: texture-terrain-conservation
-                    color: [0.300,0.300,0.300]
-                    visible: true
+        # conservation:
+        #     filter:
+        #         $zoom: { min: 4 }
+        #         kind: [protected_area, nature_reserve, national_park]
+        #         not: { protect_class: ['2','3','5']}
+        #     draw:
+        #         polygons:
+        #             style: texture-terrain-conservation
+        #             color: [0.300,0.300,0.300]
+        #             visible: true
 
-        national_forest_level_6:
-            filter:
-                all:
-                    - kind: forest
-                any:
-                    - protect_class: ['6']
-                    - operator: ['United States Forest Service']
-            draw:
-                polygons:
-                    # style: forest
-                    # style: texture-terrain-park
-                    style: dash-terrain-landuse
-                    color: [0.000,0.000,0.000]
-                    visible: true
+        # national_forest_level_6:
+        #     filter:
+        #         all:
+        #             - kind: forest
+        #         any:
+        #             - protect_class: ['6']
+        #             - operator: ['United States Forest Service']
+        #     draw:
+        #         polygons:
+        #             # style: forest
+        #             # style: texture-terrain-park
+        #             style: dash-terrain-landuse
+        #             color: [0.000,0.000,0.000]
+        #             visible: true
 
-        forest-landcover:
-            filter: { kind: [forest, natural_forest, wood, natural_wood, natural_park], $zoom: { min: 10 }, not: { operator: "United States Forest Service" } }
-            draw:
-                polygons:
-                    # style: forest
-                    style: texture-terrain-forest
-                    color: [0.300,0.300,0.300]
-                    visible: true
+        # forest-landcover:
+        #     filter: { kind: [forest, natural_forest, wood, natural_wood, natural_park], $zoom: { min: 10 }, not: { operator: "United States Forest Service" } }
+        #     draw:
+        #         polygons:
+        #             # style: forest
+        #             style: texture-terrain-forest
+        #             color: [0.300,0.300,0.300]
+        #             visible: true
 
         parks-and-national-forests-not-national-park:
             filter:
@@ -868,9 +861,7 @@ layers:
             # default for national forests and more?
             draw:
                 polygons:
-                    # style: terrain-dots
-                    # style: texture-terrain-park
-                    style: texture-terrain-zooms
+                    style: texture-terrain-park
                     color: [0.300,0.300,0.300]
                     visible: true
             national_park:
@@ -883,40 +874,41 @@ layers:
                     polygons:
                         visible: true
 
-        golf_course:
-            filter:
-                kind: golf_course
-            draw:
-                polygons:
-                    # style: landuse-test
-                    # style: terrain-dots
-                    # style: texture-terrain-earth
-                    style: texture-zooms-multi
-                    color: [0.000,0.000,0.000]
-                    visible: true
+        # golf_course:
+        #     filter:
+        #         kind: golf_course
+        #     draw:
+        #         polygons:
+        #             # style: landuse-test
+        #             # style: terrain-dots
+        #             # style: texture-terrain-earth
+        #             style: texture-zooms-multi
+        #             color: [0.000,0.000,0.000]
+        #             visible: true
 
-        hospital:
-                filter:
-                    kind: hospital
-                draw:
-                    polygons:
-                        style: glow-dots
-                        color: [0.900,0.900,0.900]
-                        visible: true
+        # hospital:
+        #         filter:
+        #             kind: hospital
+        #         draw:
+        #             polygons:
+        #                 style: glow-dots
+        #                 color: [0.900,0.900,0.900]
+        #                 visible: true
 
-        university:
-            filter:
-                all:
-                    - kind: [university, college]
-                    - $zoom: { min: 14 }
-            draw:
-                polygons:
-                    style: gradient1
-                    color: [0.900,0.900,0.900]
-                    visible: true
+        # university:
+        #     filter:
+        #         all:
+        #             - kind: [university, college]
+        #             - $zoom: { min: 14 }
+        #     draw:
+        #         polygons:
+        #             style: gradient1
+        #             color: [0.900,0.900,0.900]
+        #             visible: true
 
     buildings:
         data: { source: mapzen, layer: buildings }
+        enabled: true
         filter:
             not: { location: underground }
         draw:
@@ -924,22 +916,12 @@ layers:
                 visible: false
                 order: global.order
                 color: [0.800,0.800,0.800]
-            lines:
-                visible: false
-                order: global.order_add_1
-                color: [0.000,0.000,0.000]
+            # lines:
+            #     visible: false
+            #     order: global.order_add_1
+            #     color: [0.000,0.000,0.000]
 
         footprints:
-            filter:
-                any:
-                    - { $zoom: [13], scale_rank: [1,2,3] }
-                    - { $zoom: [14], scale_rank: [1,2,3] }
-                    - { $zoom: [15], height: { min: 100 } }
-                    - { $zoom: [15], area: { min: 700 } }
-                    - { $zoom: [15], volume: { min: 100000 } }
-                    - { $zoom: [16], area: { min: 100 } }
-                    - { $zoom: [16], volume: { min: 50000 } }
-                    - { $zoom: { min: 17 }, area: true }
             draw:
                 polygons:
                     visible: true
@@ -960,37 +942,111 @@ layers:
                         visible: true
                         color: [0.500,0.500,0.500]
                         extrude: global.building_extrude_height
-                    lines:
-                        visible: true
-                        color: [1.000,1.000,1.000]
-                        width: [[12, .75px], [18, 1.0px]]
-                        extrude: global.building_extrude_height
+                    # lines:
+                    #     visible: true
+                    #     color: [1.000,1.000,1.000]
+                    #     width: [[12, .75px], [18, 1.0px]]
+                    #     extrude: global.building_extrude_height
 
-        in_hospital:
-            filter:
-                landuse_kind: hospital
-            draw:
-                polygons:
-                    visible: true
-                    style: polygons-transparent
-                    color: [1.000,1.000,1.000,0.5]
-                lines:
-                    visible: true
-                    width: 1px
+        # in_hospital:
+        #     filter:
+        #         landuse_kind: hospital
+        #     draw:
+        #         polygons:
+        #             visible: true
+        #             style: polygons-transparent
+        #             color: [1.000,1.000,1.000,0.5]
+        #         lines:
+        #             visible: true
+        #             width: 1px
 
-        in_university:
-            filter:
-                landuse_kind: [university, college]
-            draw:
-                polygons:
-                    visible: true
-                    style: polygons-transparent
-                    color: [1.000,1.000,1.000,0.5]
-                lines:
-                    visible: true
-                    width: 1px
+        # in_university:
+        #     filter:
+        #         landuse_kind: [university, college]
+        #     draw:
+        #         polygons:
+        #             visible: true
+        #             style: polygons-transparent
+        #             color: [1.000,1.000,1.000,0.5]
+        #         lines:
+        #             visible: true
+        #             width: 1px
 
 styles:
+    texture-terrain-earth:
+        base: polygons
+        raster: custom
+        shaders:
+            uniforms:
+                # two textures to cross-fade between
+                u_textures:
+                    - images/earth-dots1.jpg
+                    # OR
+                    # - images/earth-dots2.jpg
+                    # - images/earth-dots5.jpg
+                    - images/earth-dots8.jpg
+                u_zoom_fade: [12.5, 13] # zooms to start/stop cross-fade
+                u_scale: 1.00 # number of times to repeat texture in a tile
+                # u_light: [-0.5, 0.5, -0.5] # lights are flipped to match sat hillshade
+                # u_light: [0.000, -0.320, -0.725] # lights are flipped to match sat hillshade
+                u_light: [-0.675, 0.500, -0.530] # lights are flipped to match sat hillshade
+                u_ambient: 0.5
+            blocks:
+                position: |
+                    // make tile worldspace coordinates available to the global block
+                    v_pos = modelPosition();
+                global: |
+                    varying vec4 v_pos;
+                    vec4 TileTexture(sampler2D tex, float scale) {
+                        // CONTROLS
+                        // how smooth should the transition be?
+                        // 0 = snapping, 1 = continuous smoothstep crossfade
+                        float smoothness = .75;
+                        vec2 IN = v_pos.xy * scale * exp2(floor(u_map_position.z)-u_tile_origin.z);
+                        vec2 OUT = v_pos.xy * scale * exp2(floor(u_map_position.z)-u_tile_origin.z + 1.);
+                        vec4 intex = texture2D(tex,fract(IN));
+                        vec4 outtex = texture2D(tex,fract(OUT));
+                        float texf;
+                        //// linear transition
+                        // texf = fract(u_map_position.z);
+                        //// use smoothstep instead
+                        float tx = (1. - smoothness) * .5;
+                        texf = smoothstep(tx, 1.-tx, fract(u_map_position.z));
+                        return mix(intex, outtex, texf);
+                    }
+                color: |
+                    // float dz = clamp((u_map_position.z - u_zoom_fade[0]) / (u_zoom_fade[1] - u_zoom_fade[0]), 0., 1.);
+                    // color.rgb = TileTexture(u_textures[0],u_scale).rgb;
+
+                    // simple directional light with Lambert shading
+                    vec3 terrain = normalize(sampleRaster(0).xyz *2. - 1.4); // terrain surface normal
+                    float diffuse = clamp(dot(terrain, normalize(-u_light)), 0., 1.);
+                    float dz = clamp((u_ambient) + (diffuse), 0., 1.);
+
+                    // brightness at which terrain texture fade starts
+                    float edge = 0.85;
+
+                    // controls terrain texture fade transition
+                    float feather =
+                        TANGRAM_EPSILON; // hard edge
+                        // 0.025; // in between
+                        // 0.05; // soft edge
+
+                    color.rgb = mix(
+                        TileTexture(u_textures[0],u_scale).rgb,
+                        TileTexture(u_textures[1],u_scale).rgb,
+                        // 1.-step(dz, u_edge) // hard edge
+                        smoothstep(edge - feather, edge + feather, dz)
+                    );
+
+    water-dots:
+        base: polygons
+        mix: texture
+        shaders:
+            uniforms:
+                u_customtexture: images/water-dots2.jpg
+                u_scale: 0.6
+
     water-boundaries-animated:
         base: lines
         mix: [lines-coast]
@@ -1000,7 +1056,7 @@ styles:
 
     lines-coast:
         base: lines
-        animated: true
+        animated: false
         texcoords: true
         blend: add
         shaders:
@@ -1037,58 +1093,12 @@ styles:
         base: polygons
         blend: overlay
 
-    terrain:
-        base: polygons
-        lighting: false
-        # raster: normal
-        raster: custom
-        shaders:
-            uniforms:
-                u_envmap: images/refill-spheremap-light.jpg
-                u_contrast: 1.
-                u_zoom_scale: 3.5
-                u_brightness_base: 0.95
-                u_brightness_scaler: 0.75
-            blocks:
-                global: |
-                    // Simplified view-independent environment map
-                    vec4 applyEnvmap (in sampler2D _tex, in vec3 _normal, in float scale) {
-                        _normal.z *= scale;
-                        return texture2D(_tex, .5*(normalize(_normal).xy + 1.));
-                    }
-                normal: |
-                    // get the normal from the normal map, to apply terrain shading
-                    normal = normalize(sampleRaster(0).xyz * 2. - 1.);
-                color: |
-                    // turn terrain exaggeration up/down
-                    // fade out spheremap normals with a function
-                    float scale1 = 20./(u_map_position.z + 1.0) + 1.5;
-                    color *= applyEnvmap(u_envmap, normal, 1./scale1);
-
-                    // apply contrast and brightness
-                    float m = u_zoom_scale * (u_map_position.z + 0.4) * exp(u_map_position.z * -.29);
-                    m = clamp(m, 0., 1.5);
-
-                    float contrast = m;
-                    contrast = 1.;
-                    float brightness = u_brightness_base - m * u_brightness_scaler;
-
-                    // color.rgb = ((color.rgb - 0.5) * max(contrast, 0.)) + 0.5;
-                    // color.rgb += brightness;
-
     gradient1:
         base: polygons
         shaders:
             blocks:
                 filter: |
                     color.rgb = mix(vec3(1.000), vec3(0.050,0.050,0.050), gl_FragCoord.x / u_resolution.x); // 50% mix of white and green
-
-    gradient2:
-        base: polygons
-        shaders:
-            blocks:
-                filter: |
-                    color.rgb = vec3(abs(sin(gl_FragCoord.x / u_resolution.x)+0.28), abs(sin(gl_FragCoord.x / u_resolution.x)+0.28), abs(sin(gl_FragCoord.x / u_resolution.x)+0.28));
 
     dots:
         base: polygons
@@ -1119,16 +1129,8 @@ styles:
         mix: texture
         shaders:
             uniforms:
-                u_customtexture: images/building-dots2.jpg
-                u_scale: 1
-
-    water-dots:
-        base: polygons
-        mix: texture
-        shaders:
-            uniforms:
-                u_customtexture: images/water-dots1.jpg
-                u_scale: 1
+                u_customtexture: images/building-dots4.jpg
+                u_scale: 0.85
 
     conservation:
         base: polygons
@@ -1183,9 +1185,7 @@ styles:
                     - images/water-brush3.jpg
                 u_zoom_fade: [12.5, 13] # zooms to start/stop cross-fade
                 u_scale: 1. # number of times to repeat texture in a tile
-                # u_light: [-0.5, 0.5, -0.5] # lights are flipped to match sat hillshade
-                # u_light: [0.000, -0.320, -0.725] # lights are flipped to match sat hillshade
-                u_light: [-0.375, 0.000, -0.530] # lights are flipped to match sat hillshade
+                u_light: [-0.675, 0.500, -0.530] # lights are flipped to match sat hillshade
                 u_ambient: 0.5
             blocks:
                 position: |
@@ -1242,13 +1242,17 @@ styles:
             uniforms:
                 # two textures to cross-fade between
                 u_textures:
-                    - images/park-dots1.jpg
-                    - images/park-dots3.jpg
+                    - images/park-dots4.jpg
+                    - images/park-dots5.jpg
+                    # OR
+                    # - images/earth-dots8.jpg
+                    # - images/earth-dots9.jpg
+                    # OR
+                    # - images/earth-dots5.jpg
+                    # - images/earth-dots6.jpg
                 u_zoom_fade: [12.5, 13] # zooms to start/stop cross-fade
-                u_scale: 1. # number of times to repeat texture in a tile
-                # u_light: [-0.5, 0.5, -0.5] # lights are flipped to match sat hillshade
-                # u_light: [0.000, -0.320, -0.725] # lights are flipped to match sat hillshade
-                u_light: [-0.375, 0.000, -0.530] # lights are flipped to match sat hillshade
+                u_scale: 0.90 # number of times to repeat texture in a tile
+                u_light: [-0.675, 0.500, -0.530] # lights are flipped to match sat hillshade
                 u_ambient: 0.5
             blocks:
                 position: |
@@ -1309,76 +1313,7 @@ styles:
                     - images/forest1.jpg
                 u_zoom_fade: [12.5, 13] # zooms to start/stop cross-fade
                 u_scale: 1. # number of times to repeat texture in a tile
-                # u_light: [-0.5, 0.5, -0.5] # lights are flipped to match sat hillshade
-                # u_light: [0.000, -0.320, -0.725] # lights are flipped to match sat hillshade
-                u_light: [-0.375, 0.000, -0.530] # lights are flipped to match sat hillshade
-                u_ambient: 0.5
-            blocks:
-                position: |
-                    // make tile worldspace coordinates available to the global block
-                    v_pos = modelPosition();
-                global: |
-                    varying vec4 v_pos;
-                    vec4 TileTexture(sampler2D tex, float scale) {
-                        // CONTROLS
-                        // how smooth should the transition be?
-                        // 0 = snapping, 1 = continuous smoothstep crossfade
-                        float smoothness = .75;
-                        vec2 IN = v_pos.xy * scale * exp2(floor(u_map_position.z)-u_tile_origin.z);
-                        vec2 OUT = v_pos.xy * scale * exp2(floor(u_map_position.z)-u_tile_origin.z + 1.);
-                        vec4 intex = texture2D(tex,fract(IN));
-                        vec4 outtex = texture2D(tex,fract(OUT));
-                        float texf;
-                        //// linear transition
-                        // texf = fract(u_map_position.z);
-                        //// use smoothstep instead
-                        float tx = (1. - smoothness) * .5;
-                        texf = smoothstep(tx, 1.-tx, fract(u_map_position.z));
-                        return mix(intex, outtex, texf);
-                    }
-                color: |
-                    // float dz = clamp((u_map_position.z - u_zoom_fade[0]) / (u_zoom_fade[1] - u_zoom_fade[0]), 0., 1.);
-                    // color.rgb = TileTexture(u_textures[0],u_scale).rgb;
-
-                    // simple directional light with Lambert shading
-                    vec3 terrain = normalize(sampleRaster(0).xyz *2. - 1.4); // terrain surface normal
-                    float diffuse = clamp(dot(terrain, normalize(-u_light)), 0., 1.);
-                    float dz = clamp((u_ambient) + (diffuse), 0., 1.);
-
-                    // brightness at which terrain texture fade starts
-                    float edge = 0.85;
-
-                    // controls terrain texture fade transition
-                    float feather =
-                        TANGRAM_EPSILON; // hard edge
-                        // 0.025; // in between
-                        // 0.05; // soft edge
-
-                    color.rgb = mix(
-                        TileTexture(u_textures[0],u_scale).rgb,
-                        TileTexture(u_textures[1],u_scale).rgb,
-                        // 1.-step(dz, u_edge) // hard edge
-                        smoothstep(edge - feather, edge + feather, dz)
-                    );
-
-    texture-terrain-earth:
-        base: polygons
-        raster: custom
-        shaders:
-            uniforms:
-                # two textures to cross-fade between
-                u_textures:
-                    - images/earth-dots2.jpg
-                    - images/earth-dots5.jpg
-                    # - images/earth-dots5.jpg
-                    # - images/earth-dots6.jpg
-                    # - images/earth-dots8.jpg
-                    # - images/earth-dots9.jpg
-                u_zoom_fade: [12.5, 13] # zooms to start/stop cross-fade
-                u_scale: 1. # number of times to repeat texture in a tile
-                # u_light: [-0.5, 0.5, -0.5] # lights are flipped to match sat hillshade
-                # u_light: [0.000, -0.320, -0.725] # lights are flipped to match sat hillshade
-                u_light: [-0.375, 0.000, -0.530] # lights are flipped to match sat hillshade
+                u_light: [-0.675, 0.500, -0.530] # lights are flipped to match sat hillshade
                 u_ambient: 0.5
             blocks:
                 position: |
@@ -1712,7 +1647,7 @@ styles:
                 # DOTS_DIR: vec3(0.600,-0.950,0.520)
                 DOTS_COLOR: vec3(0.)
                 DOTS_BACKGROUND_COLOR: vec3(1.)
-                DOTS_SCALE: 55.
+                DOTS_SCALE: 25.
                 DOTS_SIZE: mix(shade*3.,shade*1.,zoom())
                 # DOTS_SCALE: 35.
                 # DOTS_SIZE: mix(shade*10.,shade*2.,zoom())
