@@ -127,9 +127,9 @@ layers:
         draw:
             polygons:
                 # style: dots
-                style: texture-terrain-earth
+                # style: texture-terrain-earth
                 # style: texture-zooms2
-                # style: earth-dots2
+                style: earth-dots2
                 order: global.feature_order
                 color: [1.000,1.000,1.000]
 
