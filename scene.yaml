@@ -799,7 +799,7 @@ layers:
                     - protect_class: ['2','3','5']
             draw:
                 polygons:
-                    style: texture-terrain-park
+                    style: park
                     color: [1.000,1.000,1.000]
                     visible: true
             us_national_park:
@@ -810,7 +810,7 @@ layers:
                         - protect_class: ['2','3','5']
                 draw:
                     polygons:
-                        style: texture-terrain-park
+                        style: park
                         color: [0.300,0.300,0.300]
                         visible: true
 
@@ -861,7 +861,7 @@ layers:
             # default for national forests and more?
             draw:
                 polygons:
-                    style: texture-terrain-park
+                    style: park
                     color: [0.300,0.300,0.300]
                     visible: true
             national_park:
